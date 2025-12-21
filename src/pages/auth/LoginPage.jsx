@@ -361,8 +361,8 @@ export default function LoginPage() {
                   type="submit"
                   disabled={isLoading}
                   className={`w-full py-2.5 rounded-lg font-semibold transition ${isLoading
-                      ? "bg-gray-400 cursor-not-allowed"
-                      : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg"
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg"
                     }`}
                 >
                   {isLoading ? (
@@ -551,8 +551,8 @@ export default function LoginPage() {
                     type="submit"
                     disabled={isLoading}
                     className={`flex-1 py-2.5 rounded-lg font-semibold transition ${isLoading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg"
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg"
                       }`}
                   >
                     {isLoading ? (

@@ -1,45 +1,41 @@
 import React, { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { handleAuthSuccess } from "../../services/authHandler";
-import { AUTH, CONFIG } from "../../configurations/configuration";
+import { oauth2_login } from "../../services/authService";
+import { OAuthConfig } from "../../configurations/configuration";
+import { showError } from "../../utils/toast";
 
 export default function Authenticate() {
   const navigate = useNavigate();
   const hasHandledCodeRef = useRef(false);
+
   useEffect(() => {
     if (hasHandledCodeRef.current) return;
 
-    console.log(window.location.href);
+    console.log('OAuth callback URL:', window.location.href);
 
+    // Lấy code từ URL
     const authCodeRegex = /code=([^&]+)/;
     const isMatch = window.location.href.match(authCodeRegex);
 
     if (isMatch) {
       hasHandledCodeRef.current = true;
-      const authCode = isMatch[1];
+      const authCode = decodeURIComponent(isMatch[1]);
 
-      const url = `${CONFIG.API_GATEWAY}${AUTH.OAUTH_AUTHENTICATION}?code=${authCode}`;
+      console.log('OAuth code received:', authCode ? '✅' : '❌');
 
-      fetch(url, {
-        method: "POST",
-      })
+      // Gọi API xác thực OAuth với redirect_uri từ config
+      // redirect_uri phải khớp với URI đã đăng ký trong Google Console
+      oauth2_login(authCode)
         .then((response) => {
-          if (!response.ok) {
-            return response.json().then(errData => {
-              throw new Error(errData?.message || errData?.data?.message || 'Đăng nhập thất bại');
-            });
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log(data);
-          const responseData = data?.data;
+          console.log('OAuth authentication response:', response);
+          const responseData = response?.data?.data || response?.data;
           const token = responseData?.token;
 
           // Kiểm tra nếu không có token (tài khoản bị khóa hoặc lỗi khác)
           if (!token) {
-            const errorMessage = data?.message || responseData?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-            alert(errorMessage);
+            const errorMessage = response?.data?.message || responseData?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+            showError(errorMessage);
             navigate('/login');
             return;
           }
@@ -54,10 +50,29 @@ export default function Authenticate() {
         })
         .catch((error) => {
           console.error('Lỗi khi xác thực OAuth:', error);
-          const errorMessage = error?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
-          alert(errorMessage);
+
+          // Lấy thông báo lỗi chi tiết từ response
+          const errorMessage =
+            error?.response?.data?.message ||
+            error?.response?.data?.data?.message ||
+            error?.message ||
+            'Đăng nhập thất bại. Vui lòng thử lại.';
+
+          console.error('Error details:', {
+            status: error?.response?.status,
+            statusText: error?.response?.statusText,
+            data: error?.response?.data,
+            message: errorMessage
+          });
+
+          showError(errorMessage);
           navigate('/login');
         });
+    } else {
+      // Không tìm thấy code trong URL
+      console.error('Không tìm thấy OAuth code trong URL');
+      showError('Lỗi xác thực: Không nhận được mã từ Google.');
+      navigate('/login');
     }
   }, [navigate]);
 

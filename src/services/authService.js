@@ -1,7 +1,7 @@
 import httpClient from "../configurations/httpClient";
 import { getToken } from "./localStorageService";
 import { jwtDecode } from "jwt-decode";
-import { AUTH } from "../configurations/configuration";
+import { AUTH, OAuthConfig } from "../configurations/configuration";
 
 const getUserIdFromToken = () => {
     const token = getToken();
@@ -17,9 +17,15 @@ export const login = async (email, password) => {
     });
 };
 
-export const oauth2_login = async (code) => {
+export const oauth2_login = async (code, redirectUri = null) => {
+    // Sử dụng redirectUri từ OAuthConfig nếu không được truyền vào
+    const finalRedirectUri = redirectUri || OAuthConfig.redirectUri;
+    
     return await httpClient.post(AUTH.OAUTH_AUTHENTICATION, null, {
-        params: { code },
+        params: { 
+            code,
+            redirect_uri: finalRedirectUri
+        },
     });
 };
 
