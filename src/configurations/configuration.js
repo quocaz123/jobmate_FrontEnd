@@ -5,15 +5,6 @@ export const OAuthConfig = {
     authUri: "https://accounts.google.com/o/oauth2/v2/auth",
 }
 
-// // Debug: Kiểm tra environment variables
-// if (import.meta.env.DEV) {
-//     console.log("🔍 Environment Variables Debug:", {
-//         VITE_API_GATEWAY: import.meta.env.VITE_API_GATEWAY,
-//         VITE_GOOGLE_CLIENT_ID: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-//         VITE_OAUTH_REDIRECT_URI: import.meta.env.VITE_OAUTH_REDIRECT_URI,
-//         "All env vars": import.meta.env
-//     });
-// }
 
 export const CONFIG = {
     API_GATEWAY: import.meta.env.VITE_API_GATEWAY,

@@ -1,5 +1,6 @@
 import React, { useState } from "react"
 import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react"
+import { Link } from "react-router-dom"
 import { OAuthConfig } from "../../configurations/configuration"
 import { register } from "../../services/authService"
 import { showSuccess, showError } from "../../utils/toast"
@@ -183,9 +184,9 @@ export default function SignupPage() {
 
           <div className="text-center mt-6 text-gray-600">
             Đã có tài khoản?{" "}
-            <a href="http://localhost:5173/login" className="text-purple-600 hover:underline font-medium hover:text-purple-700">
+            <Link to="/login" className="text-purple-600 hover:underline font-medium hover:text-purple-700">
               Đăng nhập
-            </a>
+            </Link>
           </div>
         </div>
       </div>

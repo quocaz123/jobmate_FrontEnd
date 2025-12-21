@@ -3,7 +3,7 @@ import { Eye, EyeOff, Mail, Lock, X, Loader2 } from "lucide-react";
 import { OAuthConfig } from "../../configurations/configuration";
 import { login, forgotPassword, resetPassword } from "../../services/authService";
 import { handleAuthSuccess } from "../../services/authHandler";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { showError, showSuccess } from "../../utils/toast";
 
 export default function LoginPage() {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  
+
   // Forgot password state
   const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false);
   const [forgotPasswordStep, setForgotPasswordStep] = useState(1); // 1: email, 2: OTP + new password
@@ -75,40 +75,40 @@ export default function LoginPage() {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    const res = await login(email, password);
-    const data = res.data.data;
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await login(email, password);
+      const data = res.data.data;
 
-    // Nếu tài khoản bị cấm / khoá
-    if (data.status === "BANNED" || data.banned === true) {
-      showError("Tài khoản của bạn đã bị khóa do vi phạm quy định.");
-      return;
+      // Nếu tài khoản bị cấm / khoá
+      if (data.status === "BANNED" || data.banned === true) {
+        showError("Tài khoản của bạn đã bị khóa do vi phạm quy định.");
+        return;
+      }
+
+      // Nếu bật xác thực 2FA (OTP)
+      if (data.twoFaEnabled) {
+        showSuccess("Vui lòng nhập mã OTP để tiếp tục");
+        navigate("/verify-otp", {
+          state: {
+            userId: data.userId,
+            otpExpiryTime: data.otpExpiryTime
+          }
+        });
+        return;
+      }
+
+      // Đăng nhập bình thường
+      setTimeout(() => {
+        handleAuthSuccess(data.token, navigate);
+      }, 1200);
+
+    } catch (error) {
+      const msg = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
+      showError(msg);
     }
-
-    // Nếu bật xác thực 2FA (OTP)
-    if (data.twoFaEnabled) {
-      showSuccess("Vui lòng nhập mã OTP để tiếp tục");
-      navigate("/verify-otp", {
-        state: {
-          userId: data.userId,
-          otpExpiryTime: data.otpExpiryTime
-        }
-      });
-      return;
-    }
-
-    // Đăng nhập bình thường
-    setTimeout(() => {
-      handleAuthSuccess(data.token, navigate);
-    }, 1200);
-
-  } catch (error) {
-    const msg = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
-    showError(msg);
-  }
-};
+  };
 
   const handleGoogleLogin = () => {
     console.log("Google login clicked");
@@ -265,12 +265,12 @@ export default function LoginPage() {
           <div className="text-center mt-6">
             <span className="text-sm text-gray-600">
               Chưa có tài khoản?{" "}
-              <a
-                href="http://localhost:5173/signup"
+              <Link
+                to="/signup"
                 className="text-purple-600 font-medium hover:underline hover:text-purple-700"
               >
                 Đăng ký ngay
-              </a>
+              </Link>
             </span>
           </div>
         </div>
@@ -360,11 +360,10 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className={`w-full py-2.5 rounded-lg font-semibold transition ${
-                    isLoading
+                  className={`w-full py-2.5 rounded-lg font-semibold transition ${isLoading
                       ? "bg-gray-400 cursor-not-allowed"
                       : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg"
-                  }`}
+                    }`}
                 >
                   {isLoading ? (
                     <span className="flex items-center justify-center gap-2">
@@ -457,9 +456,8 @@ export default function LoginPage() {
                   />
                   {countdown !== null && countdown > 0 ? (
                     <div className="flex items-center justify-center gap-2 mt-2">
-                      <p className={`text-sm font-medium ${
-                        countdown <= 30 ? "text-red-600" : "text-gray-600"
-                      }`}>
+                      <p className={`text-sm font-medium ${countdown <= 30 ? "text-red-600" : "text-gray-600"
+                        }`}>
                         Mã OTP có hiệu lực trong: <span className="font-bold">{formatCountdown(countdown)}</span>
                       </p>
                     </div>
@@ -552,11 +550,10 @@ export default function LoginPage() {
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className={`flex-1 py-2.5 rounded-lg font-semibold transition ${
-                      isLoading
+                    className={`flex-1 py-2.5 rounded-lg font-semibold transition ${isLoading
                         ? "bg-gray-400 cursor-not-allowed"
                         : "bg-gradient-to-r from-blue-600 to-purple-600 text-white hover:shadow-lg"
-                    }`}
+                      }`}
                   >
                     {isLoading ? (
                       <span className="flex items-center justify-center gap-2">
