@@ -1,0 +1,78 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+.pnp/
+.pnp.js
+
+# VS Code workspace settings (keep extensions.json tracked)
+.vscode/*
+!.vscode/extensions.json
+
+# Production build output
+build/
+dist/
+
+# Storybook
+.out/
+
+# Log and debug files (already present above)
+# npm/yarn/pnpm lockfiles (optional to ignore - usually committed)
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# Test coverage
+coverage/
+
+# npm cache
+.npm/
+
+# vite cache
+.vite/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Icon?
+Desktop.ini
+
+# macOS
+.AppleDouble
+.LSOverride
+
+# Temporary files
+lerna-debug.log*
+
+node_modules
+dist
+# JetBrains IDEs
+.idea/
+*.iml
+
+# Local env specific
+.env.local
+
+# lock files for editor plugins
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
