@@ -1,2 +1,10 @@
+# SPA fallback - redirect all routes to index.html except static assets
+/assets/*   200
+/*.js   200
+/*.css   200
+/*.jpg   200
+/*.png   200
+/*.svg   200
+/*.ico   200
 /*    /index.html   200
 
