@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Sidebar from '../components/Common/Sidebar';
+import Sidebar from '../components/Common/SideBar';
 import TopBar from '../components/Common/TopBar';
 import { getUserInfo } from '../utils/userUtils';
 import { getMenuItemsByRole } from '../utils/menuConfig';
