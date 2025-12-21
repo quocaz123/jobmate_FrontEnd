@@ -1,7 +1,30 @@
 
+// Validate OAuth configuration
+const validateOAuthConfig = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    const redirectUri = import.meta.env.VITE_OAUTH_REDIRECT_URI;
+
+    if (!clientId || clientId.trim() === '') {
+        if (import.meta.env.DEV) {
+            console.warn('Tạo file .env.local với: VITE_GOOGLE_CLIENT_ID=your-client-id');
+        }
+    }
+
+    if (!redirectUri || redirectUri.trim() === '') {
+        console.warn('VITE_OAUTH_REDIRECT_URI không được set. Sẽ sử dụng fallback.');
+    }
+
+    return {
+        clientId: clientId || '',
+        redirectUri: redirectUri || (typeof window !== 'undefined' ? `${window.location.origin}/authenticate` : 'http://localhost:5173/authenticate'),
+    };
+};
+
+const oauthConfig = validateOAuthConfig();
+
 export const OAuthConfig = {
-    clientId: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-    redirectUri: import.meta.env.VITE_OAUTH_REDIRECT_URI,
+    clientId: oauthConfig.clientId,
+    redirectUri: oauthConfig.redirectUri,
     authUri: "https://accounts.google.com/o/oauth2/v2/auth",
 }
 
