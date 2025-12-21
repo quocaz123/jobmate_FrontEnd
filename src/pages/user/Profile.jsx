@@ -17,7 +17,7 @@ import TwoFactorTab from "./ProfileTabs/TwoFactorTab";
 import VerifyCCCDTab from "./ProfileTabs/VerifyCCCDTab";
 import ReviewsTab from "./ProfileTabs/ReviewsTab";
 import CareerInfoTab from "./ProfileTabs/CareerInfoTab";
-import LocationPickerModal from "../../components/common/LocationPickerModal";
+import LocationPickerModal from "../../components/Common/LocationPickerModal";
 import { uploadFile } from "../../services/uploadFileService";
 import { getUserInfo, getUserStats, updateUserInfo, updateTwoFactorStatus, upgradeRole } from "../../services/userService";
 import { logout } from "../../services/authService";

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createJob, getJobDetail, updateJob } from '../../services/jobService';
 import { SALARY_UNIT_OPTIONS } from '../../constants/salaryUnits';
-import LocationPickerModal from '../../components/common/LocationPickerModal';
+import LocationPickerModal from '../../components/Common/LocationPickerModal';
 import { getAllCategories } from '../../services/categoryService';
 import {
     DAY_OPTIONS,
