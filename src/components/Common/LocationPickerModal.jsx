@@ -68,7 +68,6 @@ const LocationPickerModal = ({
             );
             if (!res.ok) throw new Error("Không thể tìm vị trí, thử lại sau.");
             const data = await res.json();
-            console.log("data", data);
             setResults(Array.isArray(data?.items) ? data.items : []);
         } catch (err) {
             setError(err.message || "Không thể tìm vị trí.");
@@ -98,7 +97,6 @@ const LocationPickerModal = ({
                         throw new Error("Không thể lấy địa chỉ từ vị trí hiện tại.");
                     }
                     const data = await res.json();
-                    console.log("data", data);
                     const item = data?.items?.[0];
                     if (item) {
                         handleSelect(item);

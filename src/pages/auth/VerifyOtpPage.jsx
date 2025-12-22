@@ -75,7 +75,6 @@ export default function VerifyOtpPage() {
         try {
             const response = await verify_otp({ userId, otp });
             dismissLoading(loadingToast);
-            console.log(response);
 
             // showSuccess("Đăng nhập thành công!");
             setTimeout(() => {

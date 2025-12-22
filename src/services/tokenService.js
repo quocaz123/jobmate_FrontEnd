@@ -1,5 +1,4 @@
 import { jwtDecode } from "jwt-decode";
-import axios from "axios";
 import { getToken, setToken, removeToken } from "./localStorageService";
 import httpClient from "../configurations/httpClient";
 import { CONFIG, AUTH } from "../configurations/configuration";
@@ -35,8 +34,6 @@ export const scheduleTokenRefresh = () => {
 
   const refreshTime = Math.max(timeLeft - 60 * 1000, 5000);
 
-  console.log(`Token sẽ được refresh sau ${Math.floor(refreshTime / 1000)} giây`);
-
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(async () => {
     try {
@@ -45,7 +42,6 @@ export const scheduleTokenRefresh = () => {
 
       if (newToken) {
         setToken(newToken);
-        console.log("Token đã được refresh tự động thành công");
         scheduleTokenRefresh(); 
       } else {
         throw new Error("Không nhận được token mới từ server");
@@ -63,6 +59,5 @@ export const clearTokenRefresh = () => {
   if (refreshTimer) {
     clearTimeout(refreshTimer);
     refreshTimer = null;
-    console.log("Đã hủy lịch refresh token");
   }
 };

@@ -68,8 +68,6 @@ const SetPasswordPage = () => {
                 confirmPassword: formData.confirmPassword
             });
 
-            console.log('Set password response:', response);
-
             if (response.data?.code === 1000) {
                 dismissLoading(loadingToast);
                 showSuccess('Tạo mật khẩu thành công! Đang chuyển hướng...');

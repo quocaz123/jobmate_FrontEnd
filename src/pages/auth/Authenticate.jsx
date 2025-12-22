@@ -11,9 +11,6 @@ export default function Authenticate() {
 
   useEffect(() => {
     if (hasHandledCodeRef.current) return;
-
-    console.log('OAuth callback URL:', window.location.href);
-
     // Lấy code từ URL
     const authCodeRegex = /code=([^&]+)/;
     const isMatch = window.location.href.match(authCodeRegex);
@@ -22,17 +19,11 @@ export default function Authenticate() {
       hasHandledCodeRef.current = true;
       const authCode = decodeURIComponent(isMatch[1]);
 
-      console.log('OAuth code received:', authCode ? '✅' : '❌');
-
-      // Gọi API xác thực OAuth với redirect_uri từ config
-      // redirect_uri phải khớp với URI đã đăng ký trong Google Console
       oauth2_login(authCode)
         .then((response) => {
-          console.log('OAuth authentication response:', response);
           const responseData = response?.data?.data || response?.data;
           const token = responseData?.token;
 
-          // Kiểm tra nếu không có token (tài khoản bị khóa hoặc lỗi khác)
           if (!token) {
             const errorMessage = response?.data?.message || responseData?.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
             showError(errorMessage);

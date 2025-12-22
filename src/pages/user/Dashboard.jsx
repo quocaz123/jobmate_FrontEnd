@@ -177,7 +177,6 @@ export default function Dashboard({ onTabChange }) {
             const payload = res?.data?.data;
             const nested = payload?.data;
 
-            console.log("Recommended jobs response:", payload);
 
             // Xử lý dữ liệu nested (mảng các mảng)
             let jobs = [];

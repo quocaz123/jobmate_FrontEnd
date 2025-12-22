@@ -60,7 +60,12 @@ const TopBar = ({ inFor, role, avatar, onTabChange }) => {
                         {/* Avatar */}
                         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
                             {avatar ? (
-                                <img src={avatar} alt={inFor} className="w-full h-full object-cover" />
+                                <img 
+                                    key={avatar} 
+                                    src={avatar} 
+                                    alt={inFor} 
+                                    className="w-full h-full object-cover" 
+                                />
                             ) : (
                                 <span className="text-gray-600 text-sm font-medium">
                                     {inFor?.[0]?.toUpperCase() || 'U'}

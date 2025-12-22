@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Pagination from '../Common/Pagination';
 import { Search, User, Mail, Shield, Trash2, Lock, Unlock, Edit } from 'lucide-react';
+import { showSuccess } from '../../utils/toast';
 
 // Mock data - sẽ thay thế bằng API call thực tế
 const generateMockUsers = () => {
@@ -75,7 +76,7 @@ const ManagerUser = () => {
     const handleDelete = (userId) => {
         if (window.confirm('Bạn có chắc muốn xóa người dùng này?')) {
             setUsers(users.filter(user => user.id !== userId));
-            console.log('Xóa user:', userId);
+            showSuccess('Xóa user:', userId);
         }
     };
 

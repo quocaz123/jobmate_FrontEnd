@@ -50,7 +50,6 @@ const ApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onSuccess, userInf
         useProfileResume
       );
 
-      console.log("Apply job thành công:", response.data);
 
       setIsSubmitting(false);
       setIsSuccess(true);

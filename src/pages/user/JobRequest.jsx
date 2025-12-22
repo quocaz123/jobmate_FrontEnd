@@ -94,7 +94,6 @@ export default function JobRequest() {
     setRecommendError("");
     try {
       const res = await getRecommendedJobs(waitingListId);
-      console.log("Recommended jobs response:", res);
       const payload = res?.data?.data;
       const nested = payload?.data;
       let jobs = [];

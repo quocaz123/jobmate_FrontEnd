@@ -514,8 +514,7 @@ export const EmployerDashboard = ({ onTabChange }) => {
           }
         }}
         onViewReviews={async () => {
-          // Có thể mở modal reviews nếu cần
-          console.log('View reviews for applicant:', applicationDetail?.applicantId);
+          
         }}
       />
     </div>

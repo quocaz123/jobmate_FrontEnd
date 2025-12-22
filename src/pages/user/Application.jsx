@@ -215,16 +215,7 @@ export default function Application({ onViewDetail, onStartChat }) {
       (app.status === "ACCEPTED" || app.status === "REJECTED") &&
       app.jobId
     );
-    // Debug log (có thể xóa sau)
-    if (app.statusJob === "CLOSED") {
-      console.log("Application có thể đánh giá:", {
-        applicationId: app.id,
-        statusJob: app.statusJob,
-        status: app.status,
-        jobId: app.jobId,
-        canRate: canRateResult
-      });
-    }
+    
     return canRateResult;
   };
 

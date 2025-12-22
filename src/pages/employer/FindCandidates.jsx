@@ -308,7 +308,6 @@ const FindCandidates = () => {
         setLoading(true);
         try {
             const res = await getAllWaitingLists(targetPage, PAGE_SIZE);
-            console.log("Waiting Lists Response:", res);
             const payload = res?.data?.data || res?.data;
             setWaitingLists(payload?.data || []);
             setPage(payload?.currentPage ?? targetPage);

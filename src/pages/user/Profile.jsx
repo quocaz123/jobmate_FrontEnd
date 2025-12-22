@@ -436,11 +436,14 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
           <div className="flex flex-col items-center text-center relative">
             <div className="relative w-24 h-24 mb-3">
               <img
-                src={avatarError || !profile?.avatarUrl ? "https://via.placeholder.com/150" : profile.avatarUrl}
+                key={profile?.avatarUrl || 'default'} // Force re-render khi avatarUrl thay đổi
+                src={avatarError || !profile?.avatarUrl
+                  ? "https://via.placeholder.com/150"
+                  : profile.avatarUrl}
                 alt="Avatar"
                 className="w-24 h-24 rounded-full object-cover border"
                 onError={() => {
-                  console.error('Lỗi khi tải ảnh avatar:', profile.avatarUrl);
+                  console.error('Lỗi khi tải ảnh avatar:', profile?.avatarUrl);
                   setAvatarError(true);
                 }}
                 onLoad={() => setAvatarError(false)}
@@ -461,22 +464,56 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
                     if (!file) return;
 
                     try {
+                      // Upload file lên S3
                       const uploadRes = await uploadFile(file, "AVATAR");
-                      console.log("Kết quả upload avatar:", uploadRes);
+
 
                       const newAvatarUrl = uploadRes;
+                      if (!newAvatarUrl) {
+                        showError("Upload avatar thất bại. Vui lòng thử lại.");
+                        return;
+                      }
 
+                      // Cập nhật avatarUrl vào backend
+                      const updatedProfile = {
+                        ...profile,
+                        avatarUrl: newAvatarUrl,
+                        latitude: normalizeCoord(profile?.latitude),
+                        longitude: normalizeCoord(profile?.longitude),
+                        preferredSalaryUnit: profile?.preferredSalaryUnit || "VND_PER_HOUR",
+                      };
+
+                      const res = await updateUserInfo(updatedProfile);
+                      const serverProfile = res?.data?.data || res?.data || null;
+                      const finalAvatarUrl = serverProfile ? extractAvatarUrl(serverProfile) : newAvatarUrl;
+
+                      // Cập nhật state với avatarUrl mới
                       setProfile(prev => ({
                         ...prev,
-                        avatarUrl: newAvatarUrl
+                        ...updatedProfile,
+                        avatarUrl: finalAvatarUrl
                       }));
 
-                      if (onAvatarChange && newAvatarUrl) {
-                        onAvatarChange(newAvatarUrl);
+                      // Reset avatar error để hiển thị ảnh mới
+                      setAvatarError(false);
+
+                      // Cập nhật callback để các component khác (như TopBar) cũng cập nhật
+                      if (onAvatarChange && finalAvatarUrl) {
+                        onAvatarChange(finalAvatarUrl);
                       }
+
+                      if (onProfileUpdate) {
+                        onProfileUpdate({
+                          ...updatedProfile,
+                          avatarUrl: finalAvatarUrl
+                        });
+                      }
+
+                      showSuccess("Cập nhật avatar thành công!");
 
                     } catch (err) {
                       console.error("Lỗi upload avatar:", err);
+                      showError(err?.response?.data?.message || "Lỗi khi upload avatar. Vui lòng thử lại.");
                     }
                   };
 

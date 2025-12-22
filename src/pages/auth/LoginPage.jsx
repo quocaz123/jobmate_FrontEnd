@@ -111,7 +111,6 @@ export default function LoginPage() {
   };
 
   const handleGoogleLogin = () => {
-    console.log("Google login clicked");
     const callbackUrl = OAuthConfig.redirectUri?.trim();
     const authUrl = OAuthConfig.authUri;
     const googleClientId = OAuthConfig.clientId?.trim();
@@ -119,22 +118,14 @@ export default function LoginPage() {
     // Validate Google Client ID
     if (!googleClientId || googleClientId === '') {
       showError('Google OAuth chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
-      console.error('VITE_GOOGLE_CLIENT_ID không được set!');
       return;
     }
 
     // Validate redirect URI
     if (!callbackUrl || callbackUrl === '') {
       showError('Redirect URI chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
-      console.error('VITE_OAUTH_REDIRECT_URI không được set!');
       return;
     }
-
-    console.log('OAuth Config:', {
-      clientId: googleClientId ? '✅ Set' : 'Missing',
-      redirectUri: callbackUrl,
-      authUrl: authUrl
-    });
 
     const params = new URLSearchParams({
       redirect_uri: callbackUrl,
@@ -146,7 +137,6 @@ export default function LoginPage() {
     });
 
     const targetUrl = `${authUrl}?${params.toString()}`;
-    console.log('Redirecting to Google OAuth:', targetUrl);
     window.location.href = targetUrl;
   };
 
