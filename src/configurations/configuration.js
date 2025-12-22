@@ -15,8 +15,8 @@ const validateOAuthConfig = () => {
     }
 
     return {
-        clientId: clientId || '',
-        redirectUri: redirectUri || (typeof window !== 'undefined' ? `${window.location.origin}/authenticate` : 'http://localhost:5173/authenticate'),
+        clientId: (clientId || '').trim(),
+        redirectUri: (redirectUri || (typeof window !== 'undefined' ? `${window.location.origin}/authenticate` : 'http://localhost:5173/authenticate')).trim(),
     };
 };
 

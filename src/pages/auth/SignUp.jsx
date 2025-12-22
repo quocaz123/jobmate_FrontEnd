@@ -38,19 +38,19 @@ export default function SignupPage() {
   }
 
   const handleGoogleSignup = () => {
-    const callbackUrl = OAuthConfig.redirectUri
+    const callbackUrl = OAuthConfig.redirectUri?.trim()
     const authUrl = OAuthConfig.authUri
-    const googleClientId = OAuthConfig.clientId
+    const googleClientId = OAuthConfig.clientId?.trim()
 
     // Validate Google Client ID
-    if (!googleClientId || googleClientId.trim() === '') {
+    if (!googleClientId || googleClientId === '') {
       showError('Google OAuth chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
       console.error('VITE_GOOGLE_CLIENT_ID không được set!');
       return;
     }
 
     // Validate redirect URI
-    if (!callbackUrl || callbackUrl.trim() === '') {
+    if (!callbackUrl || callbackUrl === '') {
       showError('Redirect URI chưa được cấu hình. Vui lòng liên hệ quản trị viên.');
       console.error('VITE_OAUTH_REDIRECT_URI không được set!');
       return;
