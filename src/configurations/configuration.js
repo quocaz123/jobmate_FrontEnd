@@ -1,22 +1,32 @@
 
+// Helper function to clean environment variables (remove newlines and carriage returns, trim)
+const cleanEnvValue = (value) => {
+    if (!value) return '';
+    // Remove newlines (\n), carriage returns (\r), and trim whitespace from start/end
+    return value.replace(/[\r\n]+/g, '').trim();
+};
+
 // Validate OAuth configuration
 const validateOAuthConfig = () => {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     const redirectUri = import.meta.env.VITE_OAUTH_REDIRECT_URI;
 
-    if (!clientId || clientId.trim() === '') {
+    const cleanedClientId = cleanEnvValue(clientId);
+    const cleanedRedirectUri = cleanEnvValue(redirectUri);
+
+    if (!cleanedClientId) {
         if (import.meta.env.DEV) {
             console.warn('Tạo file .env.local với: VITE_GOOGLE_CLIENT_ID=your-client-id');
         }
     }
 
-    if (!redirectUri || redirectUri.trim() === '') {
+    if (!cleanedRedirectUri) {
         console.warn('VITE_OAUTH_REDIRECT_URI không được set. Sẽ sử dụng fallback.');
     }
 
     return {
-        clientId: (clientId || '').trim(),
-        redirectUri: (redirectUri || (typeof window !== 'undefined' ? `${window.location.origin}/authenticate` : 'http://localhost:5173/authenticate')).trim(),
+        clientId: cleanedClientId,
+        redirectUri: cleanedRedirectUri || (typeof window !== 'undefined' ? `${window.location.origin}/authenticate` : 'http://localhost:5173/authenticate'),
     };
 };
 
