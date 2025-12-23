@@ -358,6 +358,10 @@ export default function Dashboard({ onTabChange }) {
         );
     };
 
+    const handleStartChatFromDetail = () => {
+        if (onTabChange) onTabChange('messages');
+    };
+
     if (isNewUser) {
         return (
             <>
@@ -531,6 +535,7 @@ export default function Dashboard({ onTabChange }) {
                             <JobListDetail
                                 id={detailJobId}
                                 variant="modal"
+                                        onStartChat={handleStartChatFromDetail}
                                 onBack={() => {
                                     setShowJobDetail(false);
                                     setDetailJobId(null);
@@ -692,6 +697,7 @@ export default function Dashboard({ onTabChange }) {
                             <JobListDetail
                                 id={detailJobId}
                                 variant="modal"
+                                        onStartChat={handleStartChatFromDetail}
                                 onBack={() => {
                                     setShowJobDetail(false);
                                     setDetailJobId(null);
