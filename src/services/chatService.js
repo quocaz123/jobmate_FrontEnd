@@ -12,6 +12,10 @@ export const createConversation = async (data) => {
     });
 }
 
+export const deleteConversation = async (conversationId) => {
+    return await httpClient.delete(CHAT.DELETE_CONVERSATION(conversationId));
+}
+
 export const getMessagesOfConversation = async (conversationId) => {
     return await httpClient.get(`${CHAT.GET_MESSAGES_OF_CONVERSATION}?conversationId=${conversationId}`);
 }

@@ -152,6 +152,7 @@ export const CHAT = {
     CREATE_MESSAGE: "/chat/messages/create",
     CREATE_VERSATION: "/chat/conversations/create",
     SEARCH_CONVERSATIONS: "/chat/conversations/search",
+    DELETE_CONVERSATION: (conversationId) => `/api/v1/chat/conversations/${conversationId}`,
 }
 
 export const RATING = {

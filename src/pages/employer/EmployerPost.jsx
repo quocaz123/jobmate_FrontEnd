@@ -251,7 +251,34 @@ const EmployerPost = ({ mode = 'create', jobId = null, jobStatus = null, onDone 
         if (phoneDigits.length < PHONE_MIN_LEN || phoneDigits.length > PHONE_MAX_LEN) {
             newErrors.contactPhone = `Số điện thoại phải từ ${PHONE_MIN_LEN}-${PHONE_MAX_LEN} số.`;
         }
-        if (!deadline.trim()) newErrors.deadline = 'Hạn nhận hồ sơ là bắt buộc.';
+        if (!deadline.trim()) {
+            newErrors.deadline = 'Hạn nhận hồ sơ là bắt buộc.';
+        } else {
+            const deadlineDate = new Date(deadline);
+            const now = new Date();
+            if (Number.isNaN(deadlineDate.getTime())) {
+                newErrors.deadline = 'Hạn nhận hồ sơ không hợp lệ.';
+            } else if (deadlineDate <= now) {
+                newErrors.deadline = 'Hạn nhận hồ sơ phải lớn hơn thời điểm hiện tại.';
+            }
+        }
+
+        const parseMinutes = (timeStr) => {
+            if (!timeStr) return null;
+            const [h, m] = timeStr.split(':').map(Number);
+            if (Number.isNaN(h) || Number.isNaN(m)) return null;
+            return h * 60 + m;
+        };
+
+        if (!isFlexibleHours) {
+            const startMin = parseMinutes(startTime);
+            const endMin = parseMinutes(endTime);
+            if (startMin === null || endMin === null) {
+                newErrors.startTime = 'Vui lòng chọn giờ làm việc.';
+            } else if (endMin - startMin < 60) {
+                newErrors.startTime = 'Thời gian làm việc phải tối thiểu 1 tiếng và giờ kết thúc phải sau giờ bắt đầu.';
+            }
+        }
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) {
             setSuccess({ type: 'error', message: 'Vui lòng điền các trường bắt buộc.' });
@@ -489,6 +516,7 @@ const EmployerPost = ({ mode = 'create', jobId = null, jobStatus = null, onDone 
                             value={deadline}
                             onChange={e => setDeadline(e.target.value)}
                             disabled={mode === 'view' || (mode === 'edit' && !loaded)}
+                            min={new Date().toISOString().slice(0, 16)}
                             className={`block w-full border rounded-lg px-4 py-2.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 ${errors.deadline ? 'border-red-300' : 'border-gray-200'}`}
                         />
                         {errors.deadline && <div className="text-xs text-red-600 mt-1">{errors.deadline}</div>}
@@ -693,6 +721,9 @@ const EmployerPost = ({ mode = 'create', jobId = null, jobStatus = null, onDone 
                                         />
                                     </div>
                                 </div>
+                                {errors.startTime && (
+                                    <div className="text-xs text-red-600 mt-2">{errors.startTime}</div>
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Hình thức làm</label>

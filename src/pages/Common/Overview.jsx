@@ -172,7 +172,7 @@ export default function Overview() {
           {(loadingJobs && jobs.length === 0) && (
             <div className="col-span-2 text-gray-500 text-sm">Đang tải việc làm...</div>
           )}
-          {jobs.map((job) => (
+          {jobs.slice(0, 4).map((job) => (
             <JobCard
               key={job.id || job.title}
               job={job}

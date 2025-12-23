@@ -23,7 +23,7 @@ export default function JobCard({ job, onDetail, onApply }) {
       {/* Info */}
       <div className="space-y-1 text-sm text-gray-600 mb-3">
         <p className="flex items-center gap-2">
-          <MapPin size={16} /> {job.location}{job.distance ? ` • Cách ${job.distance}km` : ""}
+          <MapPin size={16} /> {job.location}
         </p>
         {job.time && (
           <p className="flex items-center gap-2">
