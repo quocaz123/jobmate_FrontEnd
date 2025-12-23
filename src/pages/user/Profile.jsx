@@ -205,6 +205,11 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
   const handleSave = async () => {
     if (!profile) return;
 
+    if (!profile.fullName || !profile.fullName.trim()) {
+      showError("Họ và tên không được để trống.");
+      return;
+    }
+
     try {
       const payload = {
         ...profile,

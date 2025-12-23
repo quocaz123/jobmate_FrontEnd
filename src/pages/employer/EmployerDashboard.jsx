@@ -19,7 +19,10 @@ import {
   getEmployerTopJobs,
 } from '../../services/employerDashboardService';
 import { getApplicationDetail } from '../../services/applicationService';
+import { showWarning } from '../../utils/toast';
 import ApplicationDetailModal from '../../components/Employer/ApplicationDetailModal';
+import ReviewsModal from '../../components/Employer/ReviewsModal';
+import { getRatings } from '../../services/ratingService';
 
 const LIMIT_TOP_JOBS = 5;
 const LIMIT_RECENT_CANDIDATES = 6;
@@ -79,18 +82,21 @@ const CandidateStatusBadge = ({ status }) => {
   );
 };
 
-const SummaryCard = ({ icon: Icon, label, value, subText, accent }) => (
-  <div className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg">
-    <div>
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-2 text-3xl font-bold text-slate-900">{formatNumber(value)}</p>
-      {subText && <p className="mt-1 text-xs text-slate-400">{subText}</p>}
+const SummaryCard = ({ icon, label, value, subText, accent }) => {
+  const IconComp = icon;
+  return (
+    <div className="group flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-indigo-200 hover:shadow-lg">
+      <div>
+        <p className="text-sm font-medium text-slate-500">{label}</p>
+        <p className="mt-2 text-3xl font-bold text-slate-900">{formatNumber(value)}</p>
+        {subText && <p className="mt-1 text-xs text-slate-400">{subText}</p>}
+      </div>
+      <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${accent}`}>
+        <IconComp className="h-5 w-5 text-indigo-600" />
+      </div>
     </div>
-    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${accent}`}>
-      <Icon className="h-5 w-5 text-indigo-600" />
-    </div>
-  </div>
-);
+  );
+};
 
 const TopJobCard = ({ job }) => {
   const progress = job?.targetApplicants
@@ -241,11 +247,13 @@ export const EmployerDashboard = ({ onTabChange }) => {
     jobs: '',
     candidates: '',
   });
-  
+
   // State cho modal chi tiết ứng viên
   const [detailModal, setDetailModal] = useState({ open: false, applicationId: null });
   const [applicationDetail, setApplicationDetail] = useState(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [reviewsModalOpen, setReviewsModalOpen] = useState(false);
+  const [reviews, setReviews] = useState([]);
 
   const fetchSummary = useCallback(async () => {
     setLoading((prev) => ({ ...prev, summary: true }));
@@ -385,7 +393,12 @@ export const EmployerDashboard = ({ onTabChange }) => {
     try {
       const response = await getApplicationDetail(applicationId);
       const data = response?.data?.data || response?.data;
-      setApplicationDetail(data);
+      const normalized = {
+        ...data,
+        resumeUrl: data?.resumeUrl || data?.resume,
+        hasResume: Boolean(data?.resumeUrl || data?.resume),
+      };
+      setApplicationDetail(normalized);
     } catch (error) {
       console.error('Lỗi khi tải chi tiết ứng viên:', error);
       setApplicationDetail(null);
@@ -435,7 +448,7 @@ export const EmployerDashboard = ({ onTabChange }) => {
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-        <div 
+        <div
           className="rounded-2xl border border-slate-200 bg-white shadow-sm xl:col-span-2 cursor-pointer transition hover:border-indigo-300 hover:shadow-md"
           onClick={() => onTabChange && onTabChange('manage-jobs')}
           role="button"
@@ -491,9 +504,9 @@ export const EmployerDashboard = ({ onTabChange }) => {
               <EmptyState title="Chưa có ứng viên mới" description="Hãy theo dõi lại khi có ứng viên ứng tuyển." />
             ) : (
               recentCandidates.map((candidate) => (
-                <CandidateCard 
-                  key={candidate.applicationId} 
-                  candidate={candidate} 
+                <CandidateCard
+                  key={candidate.applicationId}
+                  candidate={candidate}
                   onViewDetail={handleViewDetail}
                 />
               ))
@@ -514,8 +527,25 @@ export const EmployerDashboard = ({ onTabChange }) => {
           }
         }}
         onViewReviews={async () => {
-          
+          if (!applicationDetail?.applicantId) {
+            showWarning('Không tìm thấy thông tin ứng viên để xem đánh giá.');
+            return;
+          }
+          try {
+            const res = await getRatings(applicationDetail.applicantId);
+            const list = res?.data?.data || res?.data || [];
+            setReviews(Array.isArray(list) ? list : []);
+            setReviewsModalOpen(true);
+          } catch {
+            showWarning('Không tải được đánh giá của ứng viên.');
+          }
         }}
+      />
+      <ReviewsModal
+        isOpen={reviewsModalOpen}
+        onClose={() => setReviewsModalOpen(false)}
+        reviews={reviews}
+        applicantName={applicationDetail?.applicantName}
       />
     </div>
   );

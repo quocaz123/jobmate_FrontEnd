@@ -16,10 +16,17 @@ const ApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onSuccess, userInf
     if (!file) return;
 
     const MAX_BYTES = 20 * 1024 * 1024;
-    const ALLOWED_TYPES = ["image/png", "image/jpg", "image/jpeg", "application/pdf"];
+    const ALLOWED_TYPES = [
+      "image/png",
+      "image/jpg",
+      "image/jpeg",
+      "application/pdf",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      showWarning("Chỉ chấp nhận file .png, .jpg, .jpeg hoặc .pdf (tối đa 20MB).");
+      showWarning("Chỉ chấp nhận .png, .jpg, .jpeg, .pdf, .doc, .docx (tối đa 20MB).");
       e.target.value = "";
       return;
     }
@@ -57,7 +64,7 @@ const ApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onSuccess, userInf
       }
 
       // Gọi API apply job
-      const response = await applyJob(
+      await applyJob(
         jobId,
         coverLetter || null,
         resumeFileToSend,

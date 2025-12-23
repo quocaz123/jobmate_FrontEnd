@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { MapPin, DollarSign, Clock, Users, Eye, MoreVertical, Trash2, Edit, Search, Calendar } from 'lucide-react'
 import { get_my_Jobs, closeJob as closeJobApi, deleteJob as deleteJobApi } from '../../services/jobService'
+import { SALARY_UNIT_LABELS } from '../../constants/salaryUnits'
 import Pagination from '../../components/Common/Pagination'
 import EmployerCandidates from './EmployerCandidates'
 
@@ -25,9 +26,14 @@ function statusStyle(status) {
 const formatInstant = (isoUtc) => {
   if (!isoUtc) return ''
   try {
-    return new Date(isoUtc).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour12: false }).slice(0, 16)
+    return new Date(isoUtc).toLocaleString('vi-VN', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour12: false,
+      dateStyle: 'short',
+      timeStyle: 'short',
+    })
   } catch {
-    return String(isoUtc).replace('T', ' ').slice(0, 16)
+    return String(isoUtc).replace('T', ' ')
   }
 }
 
@@ -258,8 +264,11 @@ export default function EmployerManage({ onView, onEdit, onStartChat, onEditWith
                     <div className="flex items-center gap-2"><MapPin size={14} /> <span>{job.location || 'Địa điểm'}</span></div>
                     <div className="flex items-center gap-2"><DollarSign size={14} /> <span>{
                       typeof job.salary === 'number'
-                        ? `${job.salary.toLocaleString('vi-VN')}đ/${job.salaryUnit || 'buổi'}`
-                        : (job.salary || 'Mức lương')
+                        ? (() => {
+                          const unitLabel = SALARY_UNIT_LABELS[job.salaryUnit] || job.salaryUnit || 'VND';
+                          return `${job.salary.toLocaleString('vi-VN')}đ/${unitLabel}`;
+                        })()
+                        : (job.salary || (SALARY_UNIT_LABELS[job.salaryUnit] || 'Mức lương'))
                     }</span></div>
                     <div className="flex items-center gap-2"><Clock size={14} /> <span>{job.type || 'Part-time'}</span></div>
                     {job.startAt && (
