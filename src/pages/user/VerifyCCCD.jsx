@@ -13,8 +13,8 @@ import { showSuccess, showError, showLoading, dismissLoading } from "../../utils
   - Preview, xóa, gửi (mô phỏng)
 */
 
-const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-const ACCEPTED_TYPES = ["image/jpeg", "image/png"];
+const MAX_SIZE_BYTES = 20 * 1024 * 1024; // 20MB
+const ACCEPTED_TYPES = ["image/jpeg", "image/jpg", "image/png", "application/pdf"];
 
 export default function VerifyCCCD({ onSubmit }) {
   // eslint-disable-next-line no-unused-vars

@@ -1,14 +1,15 @@
 import React from "react";
 import { MapPin, Clock, Star, Users } from "lucide-react";
 
-export default function JobCard({ job }) {
+export default function JobCard({ job, onDetail, onApply }) {
+  const logoText = job.logoText || (job.company ? job.company.charAt(0).toUpperCase() : "J");
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all">
       {/* Header */}
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 bg-gray-100 rounded-md flex items-center justify-center text-gray-700 font-bold">
-            {job.logoText}
+            {logoText}
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
@@ -22,23 +23,29 @@ export default function JobCard({ job }) {
       {/* Info */}
       <div className="space-y-1 text-sm text-gray-600 mb-3">
         <p className="flex items-center gap-2">
-          <MapPin size={16} /> {job.location} • Cách {job.distance}km
+          <MapPin size={16} /> {job.location}{job.distance ? ` • Cách ${job.distance}km` : ""}
         </p>
-        <p className="flex items-center gap-2">
-          <Clock size={16} /> {job.time}
-        </p>
-        <p className="flex items-center gap-2">
-          <Star size={16} className="text-yellow-500" />
-          {job.rating} ({job.reviews} đánh giá)
-        </p>
-        <p className="flex items-center gap-2">
-          <Users size={16} /> {job.applicants} người ứng tuyển
-        </p>
+        {job.time && (
+          <p className="flex items-center gap-2">
+            <Clock size={16} /> {job.time}
+          </p>
+        )}
+        {(job.rating || job.reviews) && (
+          <p className="flex items-center gap-2">
+            <Star size={16} className="text-yellow-500" />
+            {job.rating ?? "—"} ({job.reviews ?? 0} đánh giá)
+          </p>
+        )}
+        {job.applicants != null && (
+          <p className="flex items-center gap-2">
+            <Users size={16} /> {job.applicants} người ứng tuyển
+          </p>
+        )}
       </div>
 
       {/* Tags */}
       <div className="flex flex-wrap gap-2 mb-4">
-        {job.tags.map((tag, i) => (
+        {(job.tags || []).map((tag, i) => (
           <span
             key={i}
             className={`px-3 py-1 rounded-md text-xs border ${tag === "Đã xác minh"
@@ -55,10 +62,16 @@ export default function JobCard({ job }) {
       <div className="flex justify-between items-center">
         <p className="text-lg font-bold text-gray-900">{job.salary}</p>
         <div className="flex gap-2">
-          <button className="border text-gray-500 border-gray-300 px-4 py-2 rounded-md hover:bg-gray-100 transition">
+          <button
+            onClick={onDetail}
+            className="border text-gray-500 border-gray-300 px-4 py-2 rounded-md hover:bg-gray-100 transition"
+          >
             Chi tiết
           </button>
-          <button className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition">
+          <button
+            onClick={onApply}
+            className="bg-black text-white px-4 py-2 rounded-md hover:bg-gray-800 transition"
+          >
             Ứng tuyển
           </button>
         </div>

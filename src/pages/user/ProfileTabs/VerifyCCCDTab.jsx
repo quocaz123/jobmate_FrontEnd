@@ -33,9 +33,15 @@ const STATUS_COPY = {
     },
 };
 
-const VerifyCCCDTab = ({ verificationStatus = "UNVERIFIED", rejectionReason, onVerifySuccess }) => {
+const VerifyCCCDTab = ({
+    verificationStatus = "UNVERIFIED",
+    rejectionReason,
+    onVerifySuccess,
+    hasAvatar = false,
+}) => {
     const normalizedStatus = verificationStatus?.toUpperCase() || "UNVERIFIED";
     const statusCopy = STATUS_COPY[normalizedStatus] || STATUS_COPY.UNVERIFIED;
+    const mustUploadAvatar = (normalizedStatus === "UNVERIFIED" || normalizedStatus === "REJECTED") && !hasAvatar;
 
     return (
         <div className="space-y-6">
@@ -52,11 +58,17 @@ const VerifyCCCDTab = ({ verificationStatus = "UNVERIFIED", rejectionReason, onV
                 </div>
             </div>
 
-            {normalizedStatus === "UNVERIFIED" && (
+            {mustUploadAvatar && (
+                <div className="p-4 rounded-lg border border-yellow-200 bg-yellow-50 text-sm text-yellow-800">
+                    Vui lòng tải ảnh đại diện trước khi thực hiện xác minh CCCD.
+                </div>
+            )}
+
+            {normalizedStatus === "UNVERIFIED" && !mustUploadAvatar && (
                 <VerifyCCCD onSubmit={() => onVerifySuccess && onVerifySuccess("PENDING")} />
             )}
 
-            {normalizedStatus === "REJECTED" && (
+            {normalizedStatus === "REJECTED" && !mustUploadAvatar && (
                 <div className="space-y-4">
                     <p className="text-sm text-gray-600">
                         Bạn có thể chỉnh sửa và gửi lại hồ sơ CCCD ngay bên dưới. Hãy đảm bảo hình ảnh rõ nét và thông tin

@@ -159,7 +159,8 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
 
   useEffect(() => {
     const fetchUserStats = async () => {
-      if (!profile || isEmployer) return;
+      // Chỉ load thống kê 1 lần sau khi có profile và không phải employer
+      if (!profile || isEmployer || userStats !== null) return;
       try {
         setUserStatsLoading(true);
         const res = await getUserStats();
@@ -173,7 +174,7 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
     };
 
     fetchUserStats();
-  }, [profile, isEmployer]);
+  }, [profile, isEmployer, userStats]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -309,10 +310,10 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
     try {
       setIsUpgradeSubmitting(true);
       await upgradeRole(profile.id);
-      showSuccess("Nâng cấp nhà tuyển dụng thành công! Vui lòng đăng nhập lại.");
+      showSuccess("Nâng cấp nhà tuyển dụng thành công! Bạn sẽ được đăng xuất sau 5 giây để áp dụng quyền mới.");
       setIsUpgradeModalOpen(false);
 
-      // Delay logout to allow toast/overlay to be seen
+      // Delay 5s để người dùng đọc thông báo trước khi đăng xuất
       setTimeout(async () => {
         try {
           await logout();
@@ -322,7 +323,7 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
           removeToken();
           window.location.href = "/login";
         }
-      }, 1500);
+      }, 5000);
     } catch (error) {
       console.error("Không thể gửi yêu cầu nâng cấp:", error);
       showError("Có lỗi xảy ra khi gửi yêu cầu. Vui lòng thử lại sau.");
@@ -462,6 +463,18 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
                   input.onchange = async (e) => {
                     const file = e.target.files?.[0];
                     if (!file) return;
+
+                    const MAX_BYTES = 20 * 1024 * 1024;
+                    const ALLOWED_TYPES = ["image/png", "image/jpg", "image/jpeg", "application/pdf"];
+
+                    if (!ALLOWED_TYPES.includes(file.type)) {
+                      showError("Chỉ chấp nhận file .png, .jpg, .jpeg hoặc .pdf (tối đa 20MB).");
+                      return;
+                    }
+                    if (file.size > MAX_BYTES) {
+                      showError("Kích thước tối đa 20MB.");
+                      return;
+                    }
 
                     try {
                       // Upload file lên S3
@@ -712,6 +725,7 @@ const Profile = ({ onAvatarChange, onProfileUpdate }) => {
               <VerifyCCCDTab
                 verificationStatus={verificationStatus}
                 rejectionReason={verificationReason}
+                hasAvatar={Boolean(profile?.avatarUrl)}
                 onVerifySuccess={async (nextStatus = "PENDING") => {
                   setProfile((prev) => {
                     if (!prev) return prev;

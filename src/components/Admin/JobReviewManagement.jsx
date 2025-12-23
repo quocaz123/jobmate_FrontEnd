@@ -3,6 +3,7 @@ import { Search, Eye, Check, X, MapPin, DollarSign, Briefcase, Calendar, Buildin
 import { getAllJobPeding, approveJob, rejectJob, getJobDetail } from '../../services/jobService';
 import { showSuccess, showError, showWarning } from '../../utils/toast';
 import { formatWorkingDaysForDisplay } from '../../utils/scheduleUtils';
+import { SALARY_UNIT_LABELS } from '../../constants/salaryUnits';
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -24,9 +25,11 @@ const extractPageData = (response) => {
 };
 
 const formatSalary = (salary, unit) => {
+    if (unit === 'NEGOTIABLE') return 'Thỏa thuận';
     if (!salary) return '—';
     const formatted = new Intl.NumberFormat('vi-VN').format(salary);
-    return `${formatted} ${unit || 'VND'}`;
+    const unitLabel = SALARY_UNIT_LABELS[unit] || unit || 'VND';
+    return `${formatted} ${unitLabel}`;
 };
 
 const formatDate = (dateString) => {

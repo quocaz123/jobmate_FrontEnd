@@ -1,5 +1,6 @@
 import React from "react";
 import { MapPin, DollarSign, Plus, X } from "lucide-react";
+import { showWarning } from "../../../utils/toast";
 import {
   DAY_OPTIONS,
   TIME_PRESETS,
@@ -182,6 +183,11 @@ const JobRequestForm = ({
               placeholder="Địa chỉ từ hồ sơ..."
               readOnly
               className="flex-1 border border-indigo-200 rounded-md px-3 py-2 text-sm bg-gray-50 text-gray-600"
+              onClick={() => {
+                if (!userProfile?.address) {
+                  showWarning("Vui lòng cập nhật vị trí trong hồ sơ trước khi tạo yêu cầu.");
+                }
+              }}
               required
             />
             <MapPin size={16} className="text-gray-400" />

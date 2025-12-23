@@ -185,7 +185,9 @@ const EmployerPost = ({ mode = 'create', jobId = null, jobStatus = null, onDone 
                 setWorkMode(j.workMode || 'ONSITE');
                 setCategoryId(j.categoryId || '');
                 setCategoryName(j.categoryName || j.category || '');
+                // targetApplicants: số lượng ứng viên cần tuyển (BE có thể đặt tên khác)
                 setMaxApplicants(
+                    j.targetApplicants ??
                     j.maxApplicants ??
                     j.applicantQuota ??
                     j.capacity ??
@@ -277,6 +279,8 @@ const EmployerPost = ({ mode = 'create', jobId = null, jobStatus = null, onDone 
             workingDays: formatWorkingDaysForAPI(selectedDays),
             workMode,
             categoryId: categoryId || null,
+            // Gửi cả targetApplicants để khớp naming BE
+            targetApplicants: maxApplicants ? Number(maxApplicants) : null,
             maxApplicants: maxApplicants ? Number(maxApplicants) : null,
             contactPhone: contactPhone.replace(/\D/g, '').slice(0, PHONE_MAX_LEN),
         };

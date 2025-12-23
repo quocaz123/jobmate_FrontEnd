@@ -20,7 +20,7 @@ import { getAllUsers, updateUserStatus } from '../../services/userService';
 import { showSuccess, showError } from '../../utils/toast';
 
 const ROLE_TABS = [
-  { key: 'USER', label: 'Sinh viên', icon: Users, description: 'Quản lý tài khoản sinh viên' },
+  { key: 'USER', label: 'Người dùng', icon: Users, description: 'Quản lý tài khoản người dùng' },
   {
     key: 'EMPLOYER',
     label: 'Nhà tuyển dụng',
@@ -264,7 +264,7 @@ const UsersManagement = () => {
 
     const { user, action } = statusModal;
     const newStatus = action === 'unlock' ? 'ACTIVE' : 'BANNED';
-    
+
     // Nếu đang khóa và chưa có lý do, yêu cầu nhập lý do
     if (action === 'lock' && !reason.trim()) {
       showError('Vui lòng nhập lý do khóa tài khoản.');
@@ -275,11 +275,11 @@ const UsersManagement = () => {
     try {
       await updateUserStatus(user.id, newStatus, reason.trim());
       showSuccess(
-        action === 'unlock' 
-          ? `Đã mở khóa tài khoản ${user.fullName}` 
+        action === 'unlock'
+          ? `Đã mở khóa tài khoản ${user.fullName}`
           : `Đã khóa tài khoản ${user.fullName}`
       );
-      
+
       // Refresh danh sách users
       const apiStatus = statusFilter === 'all' ? undefined : statusFilter;
       const pageIndex = Math.max(0, (currentPage || 1) - 1);
@@ -289,7 +289,7 @@ const UsersManagement = () => {
       const entries = toArray(pageData?.data ?? pageData);
       const normalized = entries.map((item) => normalizeUser(item, activeRole));
       setUsers(normalized);
-      
+
       handleCloseStatusModal();
     } catch (error) {
       console.error('Lỗi khi cập nhật trạng thái:', error);
@@ -305,7 +305,7 @@ const UsersManagement = () => {
         <div className="border-b border-slate-200 px-6 pt-6">
           <h1 className="text-2xl font-semibold text-slate-900">Quản lý người dùng</h1>
           <p className="text-sm text-slate-500 mt-2">
-            Theo dõi trạng thái tài khoản và thông tin liên hệ của sinh viên và nhà tuyển dụng.
+            Theo dõi trạng thái tài khoản và thông tin liên hệ của người dùng và nhà tuyển dụng.
           </p>
         </div>
 
@@ -372,7 +372,7 @@ const UsersManagement = () => {
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Danh sách {activeRole === 'USER' ? 'sinh viên' : 'nhà tuyển dụng'}
+              Danh sách {activeRole === 'USER' ? 'user' : 'nhà tuyển dụng'}
             </h2>
             <p className="text-sm text-slate-500 mt-1">
               Hiển thị {totalItems === 0 ? 0 : startIndex + 1} - {endIndex} trong tổng số{' '}
@@ -386,7 +386,7 @@ const UsersManagement = () => {
             <thead className="bg-slate-50">
               <tr>
                 <th className="px-6 py-3 text-left font-semibold text-slate-600 uppercase tracking-wide">
-                  {activeRole === 'USER' ? 'Sinh viên' : 'Nhà tuyển dụng'}
+                  {activeRole === 'USER' ? 'Người dùng' : 'Nhà tuyển dụng'}
                 </th>
                 <th className="px-6 py-3 text-left font-semibold text-slate-600 uppercase tracking-wide">
                   Liên hệ
@@ -511,7 +511,7 @@ const UsersManagement = () => {
                             user.role
                           )}`}
                         >
-                          {user.role === 'USER' ? 'Sinh viên' : user.role === 'EMPLOYER' ? 'Nhà tuyển dụng' : user.role}
+                          {user.role === 'USER' ? 'User' : user.role === 'EMPLOYER' ? 'Nhà tuyển dụng' : user.role}
                         </span>
                       </div>
                     </td>
@@ -578,7 +578,7 @@ const UsersManagement = () => {
           <p className="text-sm text-slate-500">
             Hiển thị {totalItems === 0 ? 0 : startIndex + 1} - {endIndex} trên tổng số{' '}
             {totalItems}{' '}
-            {activeRole === 'USER' ? 'sinh viên' : 'nhà tuyển dụng'}.
+            {activeRole === 'USER' ? 'user' : 'nhà tuyển dụng'}.
           </p>
           <div className="flex items-center gap-2">
             <button
@@ -663,7 +663,7 @@ const UsersManagement = () => {
                       )}`}
                     >
                       {selectedUser.role === 'USER'
-                        ? 'Sinh viên'
+                        ? 'User'
                         : selectedUser.role === 'EMPLOYER'
                           ? 'Nhà tuyển dụng'
                           : selectedUser.role}
@@ -829,11 +829,10 @@ const UsersManagement = () => {
                   type="button"
                   onClick={handleUpdateStatus}
                   disabled={updatingStatus === statusModal.user.id || (statusModal.action === 'lock' && !reason.trim())}
-                  className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${
-                    statusModal.action === 'lock'
-                      ? 'bg-rose-600 hover:bg-rose-700'
-                      : 'bg-emerald-600 hover:bg-emerald-700'
-                  }`}
+                  className={`rounded-lg px-4 py-2 text-sm font-medium text-white disabled:opacity-50 ${statusModal.action === 'lock'
+                    ? 'bg-rose-600 hover:bg-rose-700'
+                    : 'bg-emerald-600 hover:bg-emerald-700'
+                    }`}
                 >
                   {updatingStatus === statusModal.user.id ? (
                     <span className="flex items-center gap-2">

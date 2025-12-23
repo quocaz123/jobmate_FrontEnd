@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { AlertCircle, FileText, Check, X } from "lucide-react";
 import { applyJob } from "../../services/applicationService";
-import { showError, showSuccess, showWarning } from "../../utils/toast";
+import { showError, showWarning } from "../../utils/toast";
 
 const ApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onSuccess, userInfo }) => {
   const [coverLetter, setCoverLetter] = useState("");
@@ -13,10 +13,24 @@ const ApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onSuccess, userInf
 
   const handleFileChange = (e) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setUploadedFile(file);
-      setSelectedResume("upload");
+    if (!file) return;
+
+    const MAX_BYTES = 20 * 1024 * 1024;
+    const ALLOWED_TYPES = ["image/png", "image/jpg", "image/jpeg", "application/pdf"];
+
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      showWarning("Chỉ chấp nhận file .png, .jpg, .jpeg hoặc .pdf (tối đa 20MB).");
+      e.target.value = "";
+      return;
     }
+    if (file.size > MAX_BYTES) {
+      showWarning("Kích thước file tối đa 20MB.");
+      e.target.value = "";
+      return;
+    }
+
+    setUploadedFile(file);
+    setSelectedResume("upload");
   };
 
   const handleSubmit = async (e) => {
@@ -79,7 +93,7 @@ const ApplicationModal = ({ isOpen, onClose, jobTitle, jobId, onSuccess, userInf
     profileResume &&
     (profileResume.fileName || profileResume.id)
   );
-  
+
   useEffect(() => {
     if (isOpen && hasResume) {
       setSelectedResume("profile");

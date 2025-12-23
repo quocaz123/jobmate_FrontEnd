@@ -268,6 +268,8 @@ export default function VerificationCCCD() {
                                     <p className="mt-3 text-sm text-gray-500">Ghi chú chỉ yêu cầu khi bạn Từ chối.</p>
                                 )}
 
+                                {/* Chỉ hiển thị hành động khi trạng thái còn PENDING */}
+                                {detail.verificationStatus === 'PENDING' && (
                                 <div className="mt-4 flex items-center gap-2">
                                     <button
                                         onClick={async () => {
@@ -316,6 +318,7 @@ export default function VerificationCCCD() {
                                         <Check size={14} /> Xác minh
                                     </button>
                                 </div>
+                                )}
                             </div>
                         </div>
                     </div>

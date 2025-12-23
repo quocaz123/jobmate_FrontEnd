@@ -77,7 +77,21 @@ const InfoTab = ({ profile, isEditing, handleChange, onAddressPickerOpen }) => {
                                     name={f.name}
                                     className={`w-full mt-1 border rounded-lg p-2 text-gray-700 bg-gray-50 ${inputReadOnly ? "cursor-not-allowed opacity-75" : ""}`}
                                     value={profile[f.name] || ""}
-                                    onChange={handleChange}
+                                    onChange={(e) => {
+                                        if (f.name === "contactPhone") {
+                                            const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+                                            handleChange?.({
+                                                target: {
+                                                    name: "contactPhone",
+                                                    value: digits,
+                                                },
+                                            });
+                                            return;
+                                        }
+                                        handleChange?.(e);
+                                    }}
+                                    inputMode={f.name === "contactPhone" ? "numeric" : undefined}
+                                    maxLength={f.name === "contactPhone" ? 10 : undefined}
                                     readOnly={inputReadOnly}
                                 />
                             </div>
