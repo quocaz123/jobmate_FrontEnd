@@ -11,6 +11,7 @@ import {
 } from '../../services/chatService'
 import { getToken } from '../../services/localStorageService'
 import { showError, showSuccess } from '../../utils/toast'
+import { useMessageNotification } from '../../hooks/useMessageNotification'
 
 const getCurrentUserId = () => {
   try {
@@ -375,9 +376,27 @@ const ChatWindow = ({ conversation, socket, onMessageSent }) => {
 
 // ================= Main Page =================
 const MessagesPage = () => {
+  const { resetUnreadCount, setIsOnMessagesPage } = useMessageNotification()
   const [socket, setSocket] = useState(null)
   const [conversations, setConversations] = useState([])
   const [selectedConversation, setSelectedConversation] = useState(null)
+  const selectedConversationRef = useRef(null)
+  const processedMessagesRef = useRef(new Set())
+
+  // Đồng bộ ref với state
+  useEffect(() => {
+    selectedConversationRef.current = selectedConversation
+  }, [selectedConversation])
+
+  // Reset unreadCount và set isOnMessagesPage khi vào trang messages
+  useEffect(() => {
+    setIsOnMessagesPage(true)
+    resetUnreadCount()
+
+    return () => {
+      setIsOnMessagesPage(false)
+    }
+  }, [resetUnreadCount, setIsOnMessagesPage])
 
   const updateConversationOrder = useCallback((conversationId) => {
     setConversations((prev) => {
@@ -408,7 +427,15 @@ const MessagesPage = () => {
     })
 
     newSocket.on("connect", () => {
-
+      // Join vào tất cả conversations hiện có
+      setConversations((prev) => {
+        prev.forEach((conv) => {
+          if (conv.id) {
+            newSocket.emit('joinRoom', conv.id)
+          }
+        })
+        return prev
+      })
     })
 
     newSocket.on("connect_error", (error) => {
@@ -419,12 +446,92 @@ const MessagesPage = () => {
 
     })
 
+    // Lắng nghe tin nhắn mới để cập nhật danh sách conversations
+    // Sử dụng Set để tránh xử lý cùng một message nhiều lần
+    const handleNewMessage = (data) => {
+      try {
+        const message = typeof data === "string" ? JSON.parse(data) : data
+        const messageId = message.id || `${message.conversationId}-${message.createdDate}`
+
+        // Nếu đã xử lý message này rồi, bỏ qua
+        if (processedMessagesRef.current.has(messageId)) {
+          return
+        }
+        processedMessagesRef.current.add(messageId)
+
+        // Giới hạn size của Set để tránh memory leak
+        if (processedMessagesRef.current.size > 100) {
+          const firstId = processedMessagesRef.current.values().next().value
+          processedMessagesRef.current.delete(firstId)
+        }
+
+        const currentUserId = getCurrentUserId()
+        const isMe = message.sender?.userId === currentUserId
+        const isViewingConversation = selectedConversationRef.current?.id === message.conversationId
+
+        // Cập nhật conversation trong danh sách
+        setConversations((prev) => {
+          const conversationIndex = prev.findIndex(c => c.id === message.conversationId)
+
+          if (conversationIndex === -1) {
+            // Nếu conversation chưa có trong danh sách, không làm gì
+            return prev
+          }
+
+          const updated = [...prev]
+          const conversation = updated[conversationIndex]
+
+          // Chỉ tăng unread nếu:
+          // 1. Tin nhắn không phải từ chính user
+          // 2. User không đang xem conversation này
+          const shouldIncreaseUnread = !isMe && !isViewingConversation
+          const newUnread = shouldIncreaseUnread
+            ? (conversation.unread || 0) + 1
+            : (isMe || isViewingConversation ? 0 : conversation.unread || 0)
+
+          // Cập nhật lastMessage, timestamp và unread count
+          updated[conversationIndex] = {
+            ...conversation,
+            lastMessage: message.message || conversation.lastMessage,
+            timestamp: new Date().toLocaleString('vi-VN'),
+            unread: newUnread
+          }
+
+          // Sắp xếp lại: conversation có tin nhắn mới lên đầu
+          updated.sort((a, b) => {
+            if (a.id === message.conversationId) return -1
+            if (b.id === message.conversationId) return 1
+            return new Date(b.timestamp) - new Date(a.timestamp)
+          })
+
+          return updated
+        })
+
+        // Nếu đang xem conversation này, cập nhật luôn selectedConversation và reset unread
+        setSelectedConversation((prev) => {
+          if (prev?.id === message.conversationId) {
+            return {
+              ...prev,
+              lastMessage: message.message || prev.lastMessage,
+              timestamp: new Date().toLocaleString('vi-VN'),
+              unread: 0
+            }
+          }
+          return prev
+        })
+      } catch (error) {
+        console.error('Error handling new message in conversation list:', error)
+      }
+    }
+
+    newSocket.on('message', handleNewMessage)
+
     setSocket(newSocket)
 
     return () => {
       if (newSocket.connected) {
+        newSocket.off('message', handleNewMessage)
         newSocket.disconnect()
-
       }
     }
   }, [])
@@ -447,12 +554,21 @@ const MessagesPage = () => {
           }
         })
         setConversations(normalized)
+
+        // Join vào tất cả conversations sau khi fetch xong
+        if (socket && socket.connected) {
+          normalized.forEach((conv) => {
+            if (conv.id) {
+              socket.emit('joinRoom', conv.id)
+            }
+          })
+        }
       } catch (error) {
         showError("Error fetching conversations:", error)
       }
     }
     fetchConversations()
-  }, [])
+  }, [socket])
 
   const handleDeleteConversation = async (conversationId) => {
     if (!conversationId) return
@@ -470,12 +586,25 @@ const MessagesPage = () => {
     }
   }
 
+  const handleSelectConversation = (conversation) => {
+    // Reset unread count khi chọn conversation
+    setConversations((prev) => {
+      return prev.map((c) => {
+        if (c.id === conversation.id) {
+          return { ...c, unread: 0 }
+        }
+        return c
+      })
+    })
+    setSelectedConversation(conversation)
+  }
+
   return (
     <div className="flex h-full bg-gray-50">
       <div className="w-1/3 border-r border-gray-200 bg-white">
         <ConversationList
           conversations={conversations}
-          onSelectConversation={setSelectedConversation}
+          onSelectConversation={handleSelectConversation}
           selectedConversation={selectedConversation}
           onDeleteConversation={handleDeleteConversation}
         />

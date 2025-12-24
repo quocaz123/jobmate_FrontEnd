@@ -2,8 +2,10 @@ import React from "react";
 import { ChevronLeft, LogOut } from 'lucide-react';
 import { logout } from '../../services/authService';
 import { removeToken } from '../../services/localStorageService';
+import { useMessageNotification } from '../../hooks/useMessageNotification';
 
 const Sidebar = ({ sidebarItems, activeTab, setActiveTab, sidebarOpen, setSidebarOpen, logo, logoText }) => {
+    const { unreadCount } = useMessageNotification();
     return (
         <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white shadow-sm border-r border-gray-200 transition-all duration-300 flex flex-col h-full`}>
             {/* Header */}
@@ -61,14 +63,21 @@ const Sidebar = ({ sidebarItems, activeTab, setActiveTab, sidebarOpen, setSideba
                             <li key={item.id}>
                                 <button
                                     onClick={() => setActiveTab(item.id)}
-                                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all ${isActive
+                                    className={`w-full flex items-center space-x-3 px-3 py-2.5 rounded-lg text-left transition-all relative ${isActive
                                         ? 'bg-gradient-to-r from-indigo-500 to-blue-600 text-white shadow-md'
                                         : 'text-gray-700 hover:bg-blue-50'
                                         }`}
                                 >
-                                    <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
+                                    <div className="relative">
+                                        <Icon className={`h-5 w-5 ${isActive ? 'text-white' : 'text-gray-600'}`} />
+                                        {item.id === 'messages' && unreadCount > 0 && (
+                                            <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                                                {unreadCount > 99 ? '99+' : unreadCount}
+                                            </span>
+                                        )}
+                                    </div>
                                     {sidebarOpen && (
-                                        <span className={`text-sm font-medium ${isActive ? 'text-white' : 'text-gray-700'}`}>
+                                        <span className={`text-sm font-medium flex-1 ${isActive ? 'text-white' : 'text-gray-700'}`}>
                                             {item.label}
                                         </span>
                                     )}

@@ -11,6 +11,7 @@ import ApplicationDetail from './ApplicationDetail';
 import JobRequest from './JobRequest';
 import Profile from './Profile';
 import MessagesPage from '../Common/MessagePage';
+import { MessageNotificationProvider } from '../../contexts/MessageNotificationContext.jsx';
 import logoImg from '../../assets/logo.jpg';
 
 const UserPage = () => {
@@ -139,7 +140,7 @@ const UserPage = () => {
     };
 
     return (
-        <>
+        <MessageNotificationProvider>
             <DashboardLayout
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
@@ -161,7 +162,7 @@ const UserPage = () => {
                     userId={passwordSetupData.userId}
                 />
             )}
-        </>
+        </MessageNotificationProvider>
     );
 };
 

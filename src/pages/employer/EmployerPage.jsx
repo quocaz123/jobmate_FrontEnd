@@ -10,6 +10,7 @@ import MessagesPage from '../Common/MessagePage';
 import Profile from '../user/Profile';
 import { getUserInfo } from '../../services/userService';
 import PasswordSetupModal from '../../components/Common/PasswordSetupModal';
+import { MessageNotificationProvider } from '../../contexts/MessageNotificationContext.jsx';
 import logoImg from '../../assets/logo.jpg';
 
 const EmployerPage = () => {
@@ -115,7 +116,7 @@ const EmployerPage = () => {
     }
 
     return (
-        <>
+        <MessageNotificationProvider>
             <DashboardLayout
                 activeTab={activeTab}
                 onTabChange={handleTabChange}
@@ -137,7 +138,7 @@ const EmployerPage = () => {
                     userId={passwordSetupData.userId}
                 />
             )}
-        </>
+        </MessageNotificationProvider>
     );
 };
 
