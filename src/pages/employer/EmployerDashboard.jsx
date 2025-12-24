@@ -398,8 +398,8 @@ export const EmployerDashboard = ({ onTabChange }) => {
         ...data,
         resumeUrl: data?.resumeUrl || data?.resume,
         // Kiểm tra hasResume từ API hoặc từ resumeUrl/resume
-        hasResume: data?.hasResume !== undefined 
-          ? Boolean(data.hasResume) 
+        hasResume: data?.hasResume !== undefined
+          ? Boolean(data.hasResume)
           : Boolean(data?.resumeUrl || data?.resume),
       };
       setApplicationDetail(normalized);
