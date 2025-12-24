@@ -4,7 +4,14 @@ import { MessageNotificationContext } from '../contexts/MessageNotificationConte
 export const useMessageNotification = () => {
   const context = useContext(MessageNotificationContext);
   if (!context) {
-    throw new Error('useMessageNotification must be used within MessageNotificationProvider');
+    // Trả về default values thay vì throw error để tránh crash
+    return {
+      unreadCount: 0,
+      resetUnreadCount: () => {},
+      incrementUnreadCount: () => {},
+      setIsOnMessagesPage: () => {},
+      socket: null,
+    };
   }
   return context;
 };

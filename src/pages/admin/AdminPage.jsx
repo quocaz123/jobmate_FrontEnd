@@ -7,6 +7,7 @@ import ReportsManagement from './ReportsManagement';
 import VerificationCCCD from '../../components/Admin/VerificationCCCD';
 import JobReviewManagement from '../../components/Admin/JobReviewManagement';
 import AuditLogs from '../../components/Admin/AuditLogs';
+import { MessageNotificationProvider } from '../../contexts/MessageNotificationContext.jsx';
 import logoImg from '../../assets/logo.jpg';
 
 // Component cho Overview
@@ -42,15 +43,17 @@ const AdminPage = () => {
     };
 
     return (
-        <DashboardLayout
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            menuItems={adminMenuItems}
-            logo={logoImg}
-            logoText="JobMate Admin"
-        >
-            {renderContent()}
-        </DashboardLayout>
+        <MessageNotificationProvider>
+            <DashboardLayout
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                menuItems={adminMenuItems}
+                logo={logoImg}
+                logoText="JobMate Admin"
+            >
+                {renderContent()}
+            </DashboardLayout>
+        </MessageNotificationProvider>
     );
 };
 
