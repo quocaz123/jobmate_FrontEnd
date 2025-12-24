@@ -30,8 +30,8 @@ const AdminPage = () => {
                 return <VerificationCCCD />;
             case 'audit-logs':
                 return <AuditLogs />;
-      case 'reports':
-          return <ReportsManagement />;
+            case 'reports':
+                return <ReportsManagement />;
             default:
                 return (
                     <div className="text-center py-12">

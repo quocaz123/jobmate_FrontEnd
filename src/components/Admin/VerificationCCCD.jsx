@@ -268,56 +268,58 @@ export default function VerificationCCCD() {
                                     <p className="mt-3 text-sm text-gray-500">Ghi chú chỉ yêu cầu khi bạn Từ chối.</p>
                                 )}
 
-                                {/* Chỉ hiển thị hành động khi trạng thái còn PENDING */}
-                                {detail.verificationStatus === 'PENDING' && (
-                                <div className="mt-4 flex items-center gap-2">
-                                    <button
-                                        onClick={async () => {
-                                            if (actionType !== 'reject') {
-                                                setActionType('reject');
-                                                return;
-                                            }
-                                            if (!detail?.userId) return;
-                                            if (!rejectReason.trim()) {
-                                                showWarning('Vui lòng nhập lý do từ chối.');
-                                                return;
-                                            }
-                                            try {
-                                                setSubmitting(true);
-                                                await rejectVerification(detail.userId, rejectReason.trim());
-                                                setShowDetail(false);
-                                                setRefreshKey((k) => k + 1);
-                                            } catch (err) {
-                                                showError(err?.response?.data?.message || 'Từ chối thất bại');
-                                            } finally {
-                                                setSubmitting(false);
-                                            }
-                                        }}
-                                        disabled={submitting}
-                                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-white bg-red-600 text-sm hover:bg-red-700 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                    >
-                                        <X size={14} /> Từ chối
-                                    </button>
-                                    <button
-                                        onClick={async () => {
-                                            if (!detail?.userId) return;
-                                            try {
-                                                setSubmitting(true);
-                                                await approveVerification(detail.userId);
-                                                setShowDetail(false);
-                                                setRefreshKey((k) => k + 1);
-                                            } catch (err) {
-                                                showError(err?.response?.data?.message || 'Xác minh thất bại');
-                                            } finally {
-                                                setSubmitting(false);
-                                            }
-                                        }}
-                                        disabled={submitting}
-                                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-white bg-gradient-to-r from-indigo-500 to-blue-600 text-sm hover:opacity-90 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
-                                    >
-                                        <Check size={14} /> Xác minh
-                                    </button>
-                                </div>
+                                {/* Chỉ hiển thị hành động khi trạng thái còn PENDING hoặc đang ở tab PENDING */}
+                                {(detail.verificationStatus === 'PENDING' || tab === 'PENDING') && (
+                                    <div className="mt-4 flex items-center gap-2">
+                                        <button
+                                            onClick={async () => {
+                                                if (actionType !== 'reject') {
+                                                    setActionType('reject');
+                                                    return;
+                                                }
+                                                if (!detail?.userId) return;
+                                                if (!rejectReason.trim()) {
+                                                    showWarning('Vui lòng nhập lý do từ chối.');
+                                                    return;
+                                                }
+                                                try {
+                                                    setSubmitting(true);
+                                                    await rejectVerification(detail.userId, rejectReason.trim());
+                                                    showSuccess('Đã từ chối xác minh thành công');
+                                                    setShowDetail(false);
+                                                    setRefreshKey((k) => k + 1);
+                                                } catch (err) {
+                                                    showError(err?.response?.data?.message || 'Từ chối thất bại');
+                                                } finally {
+                                                    setSubmitting(false);
+                                                }
+                                            }}
+                                            disabled={submitting}
+                                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-white bg-red-600 text-sm hover:bg-red-700 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                        >
+                                            <X size={14} /> {actionType === 'reject' ? 'Xác nhận từ chối' : 'Từ chối'}
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                if (!detail?.userId) return;
+                                                try {
+                                                    setSubmitting(true);
+                                                    await approveVerification(detail.userId);
+                                                    showSuccess('Đã xác minh thành công');
+                                                    setShowDetail(false);
+                                                    setRefreshKey((k) => k + 1);
+                                                } catch (err) {
+                                                    showError(err?.response?.data?.message || 'Xác minh thất bại');
+                                                } finally {
+                                                    setSubmitting(false);
+                                                }
+                                            }}
+                                            disabled={submitting}
+                                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-white bg-gradient-to-r from-indigo-500 to-blue-600 text-sm hover:opacity-90 ${submitting ? 'opacity-60 cursor-not-allowed' : ''}`}
+                                        >
+                                            <Check size={14} /> Xác minh
+                                        </button>
+                                    </div>
                                 )}
                             </div>
                         </div>
