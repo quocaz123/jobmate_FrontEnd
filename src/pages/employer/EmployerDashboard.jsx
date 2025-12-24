@@ -19,10 +19,11 @@ import {
   getEmployerTopJobs,
 } from '../../services/employerDashboardService';
 import { getApplicationDetail } from '../../services/applicationService';
-import { showWarning } from '../../utils/toast';
+import { showWarning, showError } from '../../utils/toast';
 import ApplicationDetailModal from '../../components/Employer/ApplicationDetailModal';
 import ReviewsModal from '../../components/Employer/ReviewsModal';
 import { getRatings } from '../../services/ratingService';
+import { getFileUrl } from '../../services/uploadFileService';
 
 const LIMIT_TOP_JOBS = 5;
 const LIMIT_RECENT_CANDIDATES = 6;
@@ -396,7 +397,10 @@ export const EmployerDashboard = ({ onTabChange }) => {
       const normalized = {
         ...data,
         resumeUrl: data?.resumeUrl || data?.resume,
-        hasResume: Boolean(data?.resumeUrl || data?.resume),
+        // Kiểm tra hasResume từ API hoặc từ resumeUrl/resume
+        hasResume: data?.hasResume !== undefined 
+          ? Boolean(data.hasResume) 
+          : Boolean(data?.resumeUrl || data?.resume),
       };
       setApplicationDetail(normalized);
     } catch (error) {
@@ -522,8 +526,23 @@ export const EmployerDashboard = ({ onTabChange }) => {
         applicationDetail={applicationDetail}
         loadingDetail={loadingDetail}
         onViewResume={async () => {
-          if (applicationDetail?.resumeUrl) {
-            window.open(applicationDetail.resumeUrl, '_blank');
+          if (!applicationDetail?.applicantId || !applicationDetail?.hasResume) {
+            showWarning('Không có CV để xem.');
+            return;
+          }
+
+          try {
+            const response = await getFileUrl('RESUME', applicationDetail.applicantId);
+            const cvUrl = response?.data?.data?.url || response?.data?.data?.fileUrl || response?.data?.data;
+
+            if (cvUrl) {
+              window.open(cvUrl, '_blank');
+            } else {
+              showError('Không thể lấy link CV. Vui lòng thử lại.');
+            }
+          } catch (error) {
+            console.error('Lỗi khi lấy link CV:', error);
+            showError(error?.response?.data?.message || 'Không thể lấy link CV. Vui lòng thử lại.');
           }
         }}
         onViewReviews={async () => {
