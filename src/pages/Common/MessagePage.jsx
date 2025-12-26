@@ -418,7 +418,7 @@ const ChatWindow = ({ conversation, socket, onMessageSent }) => {
 
 // ================= Main Page =================
 const MessagesPage = () => {
-  const { resetUnreadCount, setIsOnMessagesPage, setViewedConversationId, syncUnreadCount } = useMessageNotification()
+  const { setIsOnMessagesPage, setViewedConversationId, syncUnreadCount } = useMessageNotification()
   const [socket, setSocket] = useState(null)
   const [conversations, setConversations] = useState([])
   const [selectedConversation, setSelectedConversation] = useState(null)
@@ -431,16 +431,16 @@ const MessagesPage = () => {
     setViewedConversationId(selectedConversation?.id || null)
   }, [selectedConversation, setViewedConversationId])
 
-  // Reset unreadCount và set isOnMessagesPage khi vào trang messages
+  // Set isOnMessagesPage khi vào trang messages
+  // KHÔNG reset unreadCount ở đây vì sẽ được đồng bộ từ API khi fetch conversations
   useEffect(() => {
     setIsOnMessagesPage(true)
-    resetUnreadCount()
 
     return () => {
       setIsOnMessagesPage(false)
       setViewedConversationId(null) // Reset conversation đang xem khi rời trang
     }
-  }, [resetUnreadCount, setIsOnMessagesPage, setViewedConversationId])
+  }, [setIsOnMessagesPage, setViewedConversationId])
 
   const updateConversationOrder = useCallback((conversationId) => {
     setConversations((prev) => {
@@ -559,7 +559,14 @@ const MessagesPage = () => {
           }
 
           // Cập nhật tổng unread count trong context
-          const totalUnread = updated.reduce((sum, conv) => sum + (conv.unread || 0), 0)
+          // Chỉ tính unread của các conversation KHÔNG đang được xem
+          const totalUnread = updated.reduce((sum, conv) => {
+            // Nếu đang xem conversation này, không tính vào tổng unread
+            if (isViewingConversation && String(conv.id) === messageConversationId) {
+              return sum
+            }
+            return sum + (conv.unread || 0)
+          }, 0)
           syncUnreadCount(totalUnread)
 
           // Sắp xếp lại: conversation có tin nhắn mới lên đầu
@@ -573,17 +580,19 @@ const MessagesPage = () => {
         })
 
         // Nếu đang xem conversation này, cập nhật luôn selectedConversation và reset unread
-        setSelectedConversation((prev) => {
-          if (prev && String(prev.id) === messageConversationId) {
-            return {
-              ...prev,
-              lastMessage: message.message || prev.lastMessage,
-              timestamp: new Date().toLocaleString('vi-VN'),
-              unread: 0
+        if (isViewingConversation) {
+          setSelectedConversation((prev) => {
+            if (prev && String(prev.id) === messageConversationId) {
+              return {
+                ...prev,
+                lastMessage: message.message || prev.lastMessage,
+                timestamp: new Date().toLocaleString('vi-VN'),
+                unread: 0
+              }
             }
-          }
-          return prev
-        })
+            return prev
+          })
+        }
       } catch (error) {
         console.error('Error handling new message in conversation list:', error)
       }

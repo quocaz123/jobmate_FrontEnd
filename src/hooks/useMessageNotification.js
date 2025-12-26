@@ -7,11 +7,11 @@ export const useMessageNotification = () => {
     // Trả về default values thay vì throw error để tránh crash
     return {
       unreadCount: 0,
-      resetUnreadCount: () => {},
-      incrementUnreadCount: () => {},
-      setIsOnMessagesPage: () => {},
-      setViewedConversationId: () => {},
-      syncUnreadCount: () => {},
+      resetUnreadCount: () => { },
+      incrementUnreadCount: () => { },
+      setIsOnMessagesPage: () => { },
+      setViewedConversationId: () => { },
+      syncUnreadCount: () => { },
       socket: null,
     };
   }
