@@ -166,10 +166,16 @@ const ChatWindow = ({ conversation, socket, onMessageSent }) => {
   const [newMessage, setNewMessage] = useState('')
   const [messages, setMessages] = useState([])
   const bottomRef = useRef(null)
+  const conversationIdRef = useRef(null)
+  const processedMessageIdsRef = useRef(new Set())
 
   useEffect(() => {
-    if (!conversation?.id || !socket) return
+    if (!conversation?.id || !socket || !socket.connected) return
+
+    const currentConversationId = String(conversation.id)
+    conversationIdRef.current = currentConversationId
     setMessages([])
+    processedMessageIdsRef.current.clear() // Reset processed messages khi chuyển conversation
 
     const fetchMessages = async () => {
       try {
@@ -187,56 +193,92 @@ const ChatWindow = ({ conversation, socket, onMessageSent }) => {
         })
         normalized.sort((a, b) => new Date(a.createdDate) - new Date(b.createdDate))
         setMessages(normalized)
+
+        // Lưu các message IDs đã có để tránh duplicate
+        normalized.forEach(m => {
+          if (m.id) {
+            processedMessageIdsRef.current.add(String(m.id))
+          }
+        })
       } catch (error) {
         showError("Error fetching messages:", error)
       }
     }
     fetchMessages()
 
-    // Join room khi chọn conversation
-    socket.emit('joinRoom', conversation.id)
+    // Validate conversationId trước khi join
+    if (currentConversationId && socket.connected) {
+      try {
+        socket.emit('joinRoom', currentConversationId)
+      } catch (error) {
+        console.error('Error joining room:', error)
+      }
+    }
 
     const handleMessage = (data) => {
       try {
         const message = typeof data === "string" ? JSON.parse(data) : data
 
-        if (message.conversationId === conversation.id) {
-          const currentUserId = getCurrentUserId()
-          const isMe = message.sender?.userId === currentUserId
-
-
-          const normalized = {
-            ...message,
-            me: isMe,
-            sender: message.sender || {},
-            createdDate: message.createdDate || new Date().toISOString(),
-          }
-
-
-
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === normalized.id)) {
-              return prev
-            }
-            return [...prev, normalized]
-          })
-          // cập nhật thứ tự hội thoại khi có tin mới
-          onMessageSent(message.conversationId)
-        } else {
-          showError("Message không thuộc conversation hiện tại:", message.conversationId)
+        // Validate message data
+        if (!message || !message.conversationId) {
+          console.warn('Invalid message format:', message)
+          return
         }
+
+        // So sánh conversationId dưới dạng string để tránh type mismatch
+        const messageConversationId = String(message.conversationId)
+        const currentConvId = conversationIdRef.current
+
+        if (messageConversationId !== currentConvId) {
+          // Message không thuộc conversation hiện tại - bỏ qua (không show error)
+          return
+        }
+
+        // Kiểm tra duplicate message
+        const messageId = String(message.id || `${messageConversationId}-${message.createdDate}`)
+        if (processedMessageIdsRef.current.has(messageId)) {
+          return // Đã xử lý message này rồi
+        }
+        processedMessageIdsRef.current.add(messageId)
+
+        // Giới hạn size của Set để tránh memory leak
+        if (processedMessageIdsRef.current.size > 200) {
+          const firstId = processedMessageIdsRef.current.values().next().value
+          processedMessageIdsRef.current.delete(firstId)
+        }
+
+        const currentUserId = getCurrentUserId()
+        const isMe = message.sender?.userId === currentUserId
+
+        const normalized = {
+          ...message,
+          me: isMe,
+          sender: message.sender || {},
+          createdDate: message.createdDate || new Date().toISOString(),
+        }
+
+        setMessages((prev) => {
+          // Double check để tránh duplicate
+          if (prev.some((m) => String(m.id) === messageId)) {
+            return prev
+          }
+          return [...prev, normalized]
+        })
+
+        // Cập nhật thứ tự hội thoại khi có tin mới
+        onMessageSent(messageConversationId)
       } catch (e) {
-        showError("Error parsing socket message:", e, "Raw data:", data)
+        console.error("Error parsing socket message:", e, "Raw data:", data)
       }
     }
 
     // Lắng nghe event 'message' từ server
     socket.on('message', handleMessage)
 
-    // Cleanup: rời room và remove listener khi chuyển conversation hoặc unmount
+    // Cleanup: chỉ remove listener, KHÔNG leave room vì có thể người khác đang nhắn
     return () => {
-      socket.emit('leaveRoom', conversation.id)
       socket.off('message', handleMessage)
+      conversationIdRef.current = null
     }
   }, [conversation?.id, socket, onMessageSent])
 
@@ -429,9 +471,16 @@ const MessagesPage = () => {
     newSocket.on("connect", () => {
       // Join vào tất cả conversations hiện có
       setConversations((prev) => {
+        const joinedRooms = new Set()
         prev.forEach((conv) => {
-          if (conv.id) {
-            newSocket.emit('joinRoom', conv.id)
+          const convId = String(conv.id)
+          if (convId && !joinedRooms.has(convId)) {
+            try {
+              newSocket.emit('joinRoom', convId)
+              joinedRooms.add(convId)
+            } catch (error) {
+              console.error(`Error joining room ${convId}:`, error)
+            }
           }
         })
         return prev
@@ -451,7 +500,15 @@ const MessagesPage = () => {
     const handleNewMessage = (data) => {
       try {
         const message = typeof data === "string" ? JSON.parse(data) : data
-        const messageId = message.id || `${message.conversationId}-${message.createdDate}`
+
+        // Validate message data
+        if (!message || !message.conversationId) {
+          console.warn('Invalid message format in conversation list:', message)
+          return
+        }
+
+        const messageId = String(message.id || `${message.conversationId}-${message.createdDate}`)
+        const messageConversationId = String(message.conversationId)
 
         // Nếu đã xử lý message này rồi, bỏ qua
         if (processedMessagesRef.current.has(messageId)) {
@@ -460,21 +517,22 @@ const MessagesPage = () => {
         processedMessagesRef.current.add(messageId)
 
         // Giới hạn size của Set để tránh memory leak
-        if (processedMessagesRef.current.size > 100) {
+        if (processedMessagesRef.current.size > 200) {
           const firstId = processedMessagesRef.current.values().next().value
           processedMessagesRef.current.delete(firstId)
         }
 
         const currentUserId = getCurrentUserId()
         const isMe = message.sender?.userId === currentUserId
-        const isViewingConversation = selectedConversationRef.current?.id === message.conversationId
+        const isViewingConversation = String(selectedConversationRef.current?.id) === messageConversationId
 
         // Cập nhật conversation trong danh sách
         setConversations((prev) => {
-          const conversationIndex = prev.findIndex(c => c.id === message.conversationId)
+          const conversationIndex = prev.findIndex(c => String(c.id) === messageConversationId)
 
           if (conversationIndex === -1) {
             // Nếu conversation chưa có trong danh sách, không làm gì
+            // Có thể là conversation mới, sẽ được thêm khi fetch lại
             return prev
           }
 
@@ -499,8 +557,8 @@ const MessagesPage = () => {
 
           // Sắp xếp lại: conversation có tin nhắn mới lên đầu
           updated.sort((a, b) => {
-            if (a.id === message.conversationId) return -1
-            if (b.id === message.conversationId) return 1
+            if (String(a.id) === messageConversationId) return -1
+            if (String(b.id) === messageConversationId) return 1
             return new Date(b.timestamp) - new Date(a.timestamp)
           })
 
@@ -509,7 +567,7 @@ const MessagesPage = () => {
 
         // Nếu đang xem conversation này, cập nhật luôn selectedConversation và reset unread
         setSelectedConversation((prev) => {
-          if (prev?.id === message.conversationId) {
+          if (prev && String(prev.id) === messageConversationId) {
             return {
               ...prev,
               lastMessage: message.message || prev.lastMessage,
@@ -557,9 +615,16 @@ const MessagesPage = () => {
 
         // Join vào tất cả conversations sau khi fetch xong
         if (socket && socket.connected) {
+          const joinedRooms = new Set()
           normalized.forEach((conv) => {
-            if (conv.id) {
-              socket.emit('joinRoom', conv.id)
+            const convId = String(conv.id)
+            if (convId && !joinedRooms.has(convId)) {
+              try {
+                socket.emit('joinRoom', convId)
+                joinedRooms.add(convId)
+              } catch (error) {
+                console.error(`Error joining room ${convId}:`, error)
+              }
             }
           })
         }

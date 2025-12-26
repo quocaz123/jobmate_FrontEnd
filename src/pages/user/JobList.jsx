@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   MapPin,
   Clock,
@@ -81,6 +81,9 @@ export default function JobList({ onViewDetail, userInfo }) {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportTarget, setReportTarget] = useState(null);
   const dropdownRefs = useRef({});
+  const lastRefreshRef = useRef(Date.now());
+  const refreshIntervalRef = useRef(null);
+  const previousJobsRef = useRef(null); // Lưu dữ liệu jobs trước đó để so sánh
 
   // Load categories
   useEffect(() => {
@@ -100,9 +103,66 @@ export default function JobList({ onViewDetail, userInfo }) {
     loadCategories();
   }, []);
 
+  // Hàm so sánh jobs để kiểm tra có thay đổi không
+  const hasJobsChanged = (oldJobs, newJobs) => {
+    if (!oldJobs || !newJobs) return true;
+    if (oldJobs.length !== newJobs.length) return true;
+
+    // Tạo map từ oldJobs với key là ID
+    const oldJobsMap = new Map();
+    oldJobs.forEach(job => {
+      const id = job.id || job.job_id || job.jobId;
+      if (id) {
+        oldJobsMap.set(String(id), {
+          id: String(id),
+          status: job.status,
+          applicationCount: job.applicationCount || 0,
+        });
+      }
+    });
+
+    // Tạo set các ID từ newJobs
+    const newJobsIds = new Set();
+
+    for (const newJob of newJobs) {
+      const id = String(newJob.id || newJob.job_id || newJob.jobId);
+      if (!id) continue;
+
+      newJobsIds.add(id);
+
+      const oldJob = oldJobsMap.get(id);
+      if (!oldJob) {
+        // Có job mới
+        return true;
+      }
+
+      // Kiểm tra các thay đổi quan trọng
+      const newStatus = newJob.status;
+      const newAppCount = newJob.applicationCount || 0;
+
+      if (oldJob.status !== newStatus) return true;
+      if (oldJob.applicationCount !== newAppCount) return true;
+    }
+
+    // Kiểm tra xem có job nào bị xóa không (có trong old nhưng không có trong new)
+    if (oldJobsMap.size !== newJobsIds.size) return true;
+
+    for (const oldJobId of oldJobsMap.keys()) {
+      if (!newJobsIds.has(oldJobId)) {
+        return true; // Có job bị xóa/đóng
+      }
+    }
+
+    return false; // Không có thay đổi
+  };
+
   // Load jobs with filters
-  const loadJobs = async (currentPage = 0) => {
-    setLoading(true);
+  const loadJobs = useCallback(async (currentPage = 0, forceUpdate = false, silent = false) => {
+    // Chỉ hiển thị loading nếu không phải silent mode (polling)
+    if (!silent) {
+      setLoading(true);
+    }
+
     try {
       const params = {
         page: currentPage,
@@ -120,33 +180,121 @@ export default function JobList({ onViewDetail, userInfo }) {
       const pageData = res?.data?.data || res?.data || {};
       const list = pageData?.data || [];
 
-      setJobs(list);
-      setTotalPages(pageData?.totalPages || 0);
-      setTotalElements(pageData?.totalElements || 0);
-      setPage(currentPage);
+      // Chỉ update state nếu có thay đổi thực sự hoặc force update
+      const hasChanged = forceUpdate || hasJobsChanged(previousJobsRef.current, list);
+
+      if (hasChanged) {
+        // Có thay đổi - update state
+        if (silent) {
+          // Silent mode: chỉ log để debug
+          console.log('[JobList] Có thay đổi dữ liệu (silent mode)');
+        }
+        setJobs(list);
+        setTotalPages(pageData?.totalPages || 0);
+        setTotalElements(pageData?.totalElements || 0);
+        setPage(currentPage);
+        // Lưu deep copy để tránh reference issue khi so sánh lần sau
+        previousJobsRef.current = JSON.parse(JSON.stringify(list));
+      } else {
+        // Không có thay đổi - KHÔNG update bất kỳ state nào để tránh re-render
+        if (silent) {
+          console.log('[JobList] Không có thay đổi, bỏ qua update (silent mode)');
+        }
+        // Chỉ cập nhật ref với dữ liệu mới (deep copy) để so sánh lần sau
+        // Lưu ý: việc này không gây re-render vì ref không trigger re-render
+        previousJobsRef.current = JSON.parse(JSON.stringify(list));
+      }
     } catch (err) {
       console.error("Lỗi khi tải danh sách công việc:", err);
-      setJobs([]);
-      setTotalPages(0);
-      setTotalElements(0);
+      if (!silent) {
+        setJobs([]);
+        setTotalPages(0);
+        setTotalElements(0);
+        previousJobsRef.current = null;
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
-  };
+  }, [keyword, location, jobType, workMode, categoryId, salaryMin, salaryMax, pageSize]);
 
   // Initial load
   useEffect(() => {
     loadJobs(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-refresh với Visibility API + Polling
+  useEffect(() => {
+    const POLLING_INTERVAL = 30000; // 30 giây
+    const MIN_REFRESH_INTERVAL = 5000; // Tối thiểu 5 giây giữa các lần refresh
+
+    // Hàm refresh jobs (chỉ khi tab visible và không đang loading)
+    const refreshJobs = () => {
+      // Chỉ refresh nếu tab đang visible
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
+
+      // Tránh refresh quá thường xuyên
+      const now = Date.now();
+      if (now - lastRefreshRef.current < MIN_REFRESH_INTERVAL) {
+        return;
+      }
+
+      // Tránh refresh khi đang loading
+      if (loading) {
+        return;
+      }
+
+      // Refresh với page và filters hiện tại (silent mode để không hiển thị loading)
+      loadJobs(page, false, true); // silent = true để không làm UI nhảy
+      lastRefreshRef.current = now;
+    };
+
+    // Xử lý khi tab visibility thay đổi
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        // Khi quay lại tab, refresh ngay nếu đã qua một khoảng thời gian
+        const timeSinceLastRefresh = Date.now() - lastRefreshRef.current;
+        if (timeSinceLastRefresh >= POLLING_INTERVAL) {
+          refreshJobs();
+        }
+      }
+    };
+
+    // Setup polling interval
+    refreshIntervalRef.current = setInterval(() => {
+      refreshJobs();
+    }, POLLING_INTERVAL);
+
+    // Lắng nghe visibility change
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Cleanup
+    return () => {
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [page, loading, loadJobs]);
 
   // Search handler
   const handleSearch = () => {
-    loadJobs(0);
+    // Reset timer để tránh polling refresh ngay sau khi user search
+    lastRefreshRef.current = Date.now();
+    previousJobsRef.current = null; // Reset để force update khi search
+    loadJobs(0, true); // Force update khi user thao tác
   };
 
   // Filter change handler
   const handleFilterChange = () => {
-    loadJobs(0);
+    // Reset timer để tránh polling refresh ngay sau khi user thay đổi filter
+    lastRefreshRef.current = Date.now();
+    previousJobsRef.current = null; // Reset để force update khi filter
+    loadJobs(0, true); // Force update khi user thao tác
   };
 
   // Reset filters
@@ -158,7 +306,10 @@ export default function JobList({ onViewDetail, userInfo }) {
     setCategoryId("");
     setSalaryMin("");
     setSalaryMax("");
-    setTimeout(() => loadJobs(0), 100);
+    // Reset timer để tránh polling refresh ngay sau khi reset
+    lastRefreshRef.current = Date.now();
+    previousJobsRef.current = null; // Reset để force update khi reset
+    setTimeout(() => loadJobs(0, true), 100); // Force update khi user thao tác
   };
 
   // Đóng dropdown khi click bên ngoài
@@ -718,7 +869,11 @@ export default function JobList({ onViewDetail, userInfo }) {
             {totalPages > 1 && (
               <div className="mt-6 flex items-center justify-center gap-2">
                 <button
-                  onClick={() => loadJobs(page - 1)}
+                  onClick={() => {
+                    lastRefreshRef.current = Date.now();
+                    previousJobsRef.current = null; // Reset để force update khi chuyển trang
+                    loadJobs(page - 1, true);
+                  }}
                   disabled={page === 0}
                   className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
@@ -739,7 +894,11 @@ export default function JobList({ onViewDetail, userInfo }) {
                     return (
                       <button
                         key={pageNum}
-                        onClick={() => loadJobs(pageNum)}
+                        onClick={() => {
+                          lastRefreshRef.current = Date.now();
+                          previousJobsRef.current = null; // Reset để force update khi chuyển trang
+                          loadJobs(pageNum, true);
+                        }}
                         className={`px-3 py-2 rounded-lg text-sm ${page === pageNum
                           ? "bg-blue-600 text-white"
                           : "border border-gray-200 hover:bg-gray-50"
@@ -751,7 +910,11 @@ export default function JobList({ onViewDetail, userInfo }) {
                   })}
                 </div>
                 <button
-                  onClick={() => loadJobs(page + 1)}
+                  onClick={() => {
+                    lastRefreshRef.current = Date.now();
+                    previousJobsRef.current = null; // Reset để force update khi chuyển trang
+                    loadJobs(page + 1, true);
+                  }}
                   disabled={page >= totalPages - 1}
                   className="px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                 >
