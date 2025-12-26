@@ -11,7 +11,7 @@ import {
   X,
   ChevronDown,
 } from "lucide-react";
-import { searchAvailableJobs } from "../../services/jobService";
+import { getNearbyJobs } from "../../services/jobService";
 import { getAllCategories } from "../../services/categoryService";
 import ApplicationModal from "../../components/User/ApplicationModal";
 import ReportModal from "../../components/User/ReportModal";
@@ -167,16 +167,9 @@ export default function JobList({ onViewDetail, userInfo }) {
       const params = {
         page: currentPage,
         size: pageSize,
-        keyword: keyword.trim() || null,
-        location: location.trim() || null,
-        jobType: jobType || null,
-        workMode: workMode || null,
-        categoryId: categoryId || null,
-        salaryMin: salaryMin ? Number(salaryMin) : null,
-        salaryMax: salaryMax ? Number(salaryMax) : null,
       };
 
-      const res = await searchAvailableJobs(params);
+      const res = await getNearbyJobs(params);
       const pageData = res?.data?.data || res?.data || {};
       const list = pageData?.data || [];
 
@@ -217,7 +210,7 @@ export default function JobList({ onViewDetail, userInfo }) {
         setLoading(false);
       }
     }
-  }, [keyword, location, jobType, workMode, categoryId, salaryMin, salaryMax, pageSize]);
+  }, [pageSize]);
 
   // Initial load
   useEffect(() => {

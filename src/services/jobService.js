@@ -23,8 +23,25 @@ export const getJobDetailByIdForUser = async (jobId) => {
     return await httpClient.get(JOB.GET_JOB_DETAIL_BY_ID_FOR_USER(jobId));
 };
 
-export const getNearbyJobs = async (latitude, longitude, radius = 10) => {
-    return await httpClient.get(JOB.GET_NEARBY_JOBS, { params: { latitude, longitude, radius } });
+export const getNearbyJobs = async (params = {}) => {
+    const {
+        latitude = null,
+        longitude = null,
+        radius = 10,
+        page = 0,
+        size = 10,
+    } = params;
+
+    const queryParams = { page, size };
+
+    // Chỉ thêm latitude, longitude, radius nếu được cung cấp
+    if (latitude !== null && longitude !== null) {
+        queryParams.latitude = latitude;
+        queryParams.longitude = longitude;
+        queryParams.radius = radius;
+    }
+
+    return await httpClient.get(JOB.GET_NEARBY_JOBS, { params: queryParams });
 };
 
 export const getAvailableJobs = async () => {
