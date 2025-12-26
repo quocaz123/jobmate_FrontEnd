@@ -4,6 +4,7 @@ import { getJobDetailByIdForUser } from "../../services/jobService";
 import { createConversation } from "../../services/chatService";
 import ApplicationModal from "../../components/User/ApplicationModal";
 import { formatWorkingDaysForDisplay } from "../../utils/scheduleUtils";
+import { showError, showSuccess } from "../../utils/toast";
 
 export default function JobListDetail({ id, onBack, onStartChat, variant = "page", reportReason = null }) {
   const [job, setJob] = useState(null);
@@ -45,12 +46,17 @@ export default function JobListDetail({ id, onBack, onStartChat, variant = "page
 
   const handleStartChat = async () => {
     const ids = participantIds && participantIds.filter(Boolean);
-    if (!ids || ids.length === 0) return;
+    if (!ids || ids.length === 0) {
+      showError("Không tìm thấy thông tin nhà tuyển dụng để tạo cuộc trò chuyện.");
+      return;
+    }
     try {
       await createConversation({ participantIds: ids });
+      showSuccess("Đã tạo cuộc trò chuyện thành công!");
       if (onStartChat) onStartChat();
     } catch (e) {
-      console.warn('Không thể tạo cuộc trò chuyện:', e);
+      console.error('Không thể tạo cuộc trò chuyện:', e);
+      showError(e?.response?.data?.message || "Không thể tạo cuộc trò chuyện. Vui lòng thử lại.");
     }
   };
 

@@ -10,6 +10,8 @@ export const useMessageNotification = () => {
       resetUnreadCount: () => {},
       incrementUnreadCount: () => {},
       setIsOnMessagesPage: () => {},
+      setViewedConversationId: () => {},
+      syncUnreadCount: () => {},
       socket: null,
     };
   }

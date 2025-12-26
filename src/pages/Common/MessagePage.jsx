@@ -418,17 +418,18 @@ const ChatWindow = ({ conversation, socket, onMessageSent }) => {
 
 // ================= Main Page =================
 const MessagesPage = () => {
-  const { resetUnreadCount, setIsOnMessagesPage } = useMessageNotification()
+  const { resetUnreadCount, setIsOnMessagesPage, setViewedConversationId, syncUnreadCount } = useMessageNotification()
   const [socket, setSocket] = useState(null)
   const [conversations, setConversations] = useState([])
   const [selectedConversation, setSelectedConversation] = useState(null)
   const selectedConversationRef = useRef(null)
   const processedMessagesRef = useRef(new Set())
 
-  // Đồng bộ ref với state
+  // Đồng bộ ref với state và cập nhật conversation đang xem
   useEffect(() => {
     selectedConversationRef.current = selectedConversation
-  }, [selectedConversation])
+    setViewedConversationId(selectedConversation?.id || null)
+  }, [selectedConversation, setViewedConversationId])
 
   // Reset unreadCount và set isOnMessagesPage khi vào trang messages
   useEffect(() => {
@@ -437,8 +438,9 @@ const MessagesPage = () => {
 
     return () => {
       setIsOnMessagesPage(false)
+      setViewedConversationId(null) // Reset conversation đang xem khi rời trang
     }
-  }, [resetUnreadCount, setIsOnMessagesPage])
+  }, [resetUnreadCount, setIsOnMessagesPage, setViewedConversationId])
 
   const updateConversationOrder = useCallback((conversationId) => {
     setConversations((prev) => {
@@ -543,9 +545,10 @@ const MessagesPage = () => {
           // 1. Tin nhắn không phải từ chính user
           // 2. User không đang xem conversation này
           const shouldIncreaseUnread = !isMe && !isViewingConversation
+          const oldUnread = conversation.unread || 0
           const newUnread = shouldIncreaseUnread
-            ? (conversation.unread || 0) + 1
-            : (isMe || isViewingConversation ? 0 : conversation.unread || 0)
+            ? oldUnread + 1
+            : (isMe || isViewingConversation ? 0 : oldUnread)
 
           // Cập nhật lastMessage, timestamp và unread count
           updated[conversationIndex] = {
@@ -554,6 +557,10 @@ const MessagesPage = () => {
             timestamp: new Date().toLocaleString('vi-VN'),
             unread: newUnread
           }
+
+          // Cập nhật tổng unread count trong context
+          const totalUnread = updated.reduce((sum, conv) => sum + (conv.unread || 0), 0)
+          syncUnreadCount(totalUnread)
 
           // Sắp xếp lại: conversation có tin nhắn mới lên đầu
           updated.sort((a, b) => {
@@ -592,7 +599,7 @@ const MessagesPage = () => {
         newSocket.disconnect()
       }
     }
-  }, [])
+  }, [syncUnreadCount])
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -608,10 +615,14 @@ const MessagesPage = () => {
             avatar,
             lastMessage: c.lastMessage || 'Chưa có tin nhắn',
             timestamp: c.modifiedDate ? new Date(c.modifiedDate).toLocaleString('vi-VN') : '',
-            unread: 0,
+            unread: c.unreadCount || 0, // Lấy unread count từ API nếu có
           }
         })
         setConversations(normalized)
+
+        // Tính tổng unread count và đồng bộ với context
+        const totalUnread = normalized.reduce((sum, conv) => sum + (conv.unread || 0), 0)
+        syncUnreadCount(totalUnread)
 
         // Join vào tất cả conversations sau khi fetch xong
         if (socket && socket.connected) {
@@ -633,7 +644,7 @@ const MessagesPage = () => {
       }
     }
     fetchConversations()
-  }, [socket])
+  }, [socket, syncUnreadCount])
 
   const handleDeleteConversation = async (conversationId) => {
     if (!conversationId) return
@@ -641,7 +652,13 @@ const MessagesPage = () => {
     if (!confirm) return
     try {
       await deleteConversation(conversationId)
-      setConversations((prev) => prev.filter((c) => c.id !== conversationId))
+      setConversations((prev) => {
+        const updated = prev.filter((c) => c.id !== conversationId)
+        // Cập nhật tổng unread count sau khi xóa
+        const totalUnread = updated.reduce((sum, conv) => sum + (conv.unread || 0), 0)
+        syncUnreadCount(totalUnread)
+        return updated
+      })
       if (selectedConversation?.id === conversationId) {
         setSelectedConversation(null)
       }
@@ -654,12 +671,16 @@ const MessagesPage = () => {
   const handleSelectConversation = (conversation) => {
     // Reset unread count khi chọn conversation
     setConversations((prev) => {
-      return prev.map((c) => {
+      const updated = prev.map((c) => {
         if (c.id === conversation.id) {
           return { ...c, unread: 0 }
         }
         return c
       })
+      // Cập nhật tổng unread count trong context
+      const totalUnread = updated.reduce((sum, conv) => sum + (conv.unread || 0), 0)
+      syncUnreadCount(totalUnread)
+      return updated
     })
     setSelectedConversation(conversation)
   }

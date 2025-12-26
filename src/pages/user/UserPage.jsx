@@ -128,7 +128,7 @@ const UserPage = () => {
                     />
                 );
             case 'job-requests':
-                return <JobRequest />;
+                return <JobRequest onStartChat={() => setActiveTab('messages')} />;
             default:
                 return (
                     <div className="text-center py-12">

@@ -47,7 +47,7 @@ function formatJobSalary(salary, unit) {
   return label ? `${formatted} · ${label}` : formatted;
 }
 
-export default function JobRequest() {
+export default function JobRequest({ onStartChat }) {
   const [jobType, setJobType] = useState("FULL_TIME");
   const [skills, setSkills] = useState([]);
   const [skillInput, setSkillInput] = useState("");
@@ -337,6 +337,11 @@ export default function JobRequest() {
               onBack={() => {
                 setShowJobDetail(false);
                 setDetailJobId(null);
+              }}
+              onStartChat={() => {
+                setShowJobDetail(false);
+                setDetailJobId(null);
+                if (onStartChat) onStartChat();
               }}
             />
           </div>
