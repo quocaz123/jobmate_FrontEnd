@@ -47,7 +47,7 @@ export const MessageNotificationProvider = ({ children }) => {
             try {
                 const res = await getMyConversations();
                 const conversations = res?.data?.data || [];
-                
+
                 // Tính tổng unread count từ API
                 let totalUnread = 0;
                 conversations.forEach((conv) => {
@@ -61,7 +61,7 @@ export const MessageNotificationProvider = ({ children }) => {
                         totalUnread += conv.unreadCount || 0;
                     }
                 });
-                
+
                 // Đồng bộ unread count từ API nếu có
                 if (totalUnread > 0) {
                     setUnreadCount(totalUnread);
@@ -99,24 +99,22 @@ export const MessageNotificationProvider = ({ children }) => {
                     processedMessageIdsRef.current.delete(firstId);
                 }
 
-                const messageConversationId = String(message.conversationId);
                 const isMe = message.sender?.userId === currentUserId;
-                const isViewingThisConversation = viewedConversationIdRef.current === messageConversationId;
 
                 // Chỉ tăng unreadCount nếu:
                 // 1. Tin nhắn không phải từ chính user này
-                // 2. User không đang ở trang messages HOẶC không đang xem conversation này
-                if (!isMe && (!isOnMessagesPageRef.current || !isViewingThisConversation)) {
+                // 2. User KHÔNG đang ở trang messages (để MessagePage tự quản lý khi ở trang messages)
+                if (!isMe && !isOnMessagesPageRef.current) {
+                    // Chỉ tăng unreadCount trong context khi KHÔNG ở trang messages
+                    // Khi ở trang messages, MessagePage sẽ tự quản lý và cập nhật unreadCount thông qua syncUnreadCount
                     setUnreadCount((prev) => prev + 1);
 
-                    // Hiển thị toast notification chỉ khi không ở trang messages
-                    if (!isOnMessagesPageRef.current) {
-                        const senderName = message.sender?.fullName || 'Ai đó';
-                        const messagePreview = message.message?.substring(0, 50) || '';
-                        showSuccess(`Tin nhắn mới từ ${senderName}: ${messagePreview}${messagePreview.length >= 50 ? '...' : ''}`, {
-                            duration: 5000,
-                        });
-                    }
+                    // Hiển thị toast notification
+                    const senderName = message.sender?.fullName || 'Ai đó';
+                    const messagePreview = message.message?.substring(0, 50) || '';
+                    showSuccess(`Tin nhắn mới từ ${senderName}: ${messagePreview}${messagePreview.length >= 50 ? '...' : ''}`, {
+                        duration: 5000,
+                    });
                 }
             } catch (error) {
                 console.error('Error handling message notification:', error);

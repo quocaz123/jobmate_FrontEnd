@@ -559,14 +559,9 @@ const MessagesPage = () => {
           }
 
           // Cập nhật tổng unread count trong context
-          // Chỉ tính unread của các conversation KHÔNG đang được xem
-          const totalUnread = updated.reduce((sum, conv) => {
-            // Nếu đang xem conversation này, không tính vào tổng unread
-            if (isViewingConversation && String(conv.id) === messageConversationId) {
-              return sum
-            }
-            return sum + (conv.unread || 0)
-          }, 0)
+          // Tính tổng unread của TẤT CẢ conversations (kể cả conversation đang xem nếu có unread)
+          // Nhưng khi đang xem conversation này, unread của nó đã được reset về 0 ở trên
+          const totalUnread = updated.reduce((sum, conv) => sum + (conv.unread || 0), 0)
           syncUnreadCount(totalUnread)
 
           // Sắp xếp lại: conversation có tin nhắn mới lên đầu
