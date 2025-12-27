@@ -79,15 +79,18 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoginError(""); // Reset error message
-    
+
     try {
       const res = await login(email, password);
       const data = res.data.data;
 
       // Nếu tài khoản bị cấm / khoá
       if (data.status === "BANNED" || data.banned === true) {
-        setLoginError("Tài khoản của bạn đã bị khóa do vi phạm quy định.");
-        showError("Tài khoản của bạn đã bị khóa do vi phạm quy định.");
+        const bannedMessage = "Tài khoản của bạn đã bị khóa do vi phạm quy định.";
+        setLoginError(bannedMessage);
+        showError(bannedMessage, {
+          duration: 6000,
+        });
         return;
       }
 
@@ -109,10 +112,13 @@ export default function LoginPage() {
       }, 1200);
 
     } catch (error) {
-      // Hiển thị thông báo lỗi "email hoặc password không đúng"
-      const errorMessage = "Email hoặc mật khẩu không đúng";
+      // Lấy thông báo lỗi từ API response
+      const errorMessage = error.response?.data?.message || "Email hoặc mật khẩu không đúng";
       setLoginError(errorMessage);
-      showError(errorMessage);
+      // Hiển thị thông báo với thời gian lâu hơn (6 giây)
+      showError(errorMessage, {
+        duration: 6000,
+      });
       // Không refresh trang, giữ nguyên giá trị email và password
     }
   };
@@ -180,9 +186,8 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="your.email@example.com"
-                  className={`w-full pl-10 pr-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all ${
-                    loginError ? "border-red-300 focus:ring-red-400" : "border-gray-300"
-                  }`}
+                  className={`w-full pl-10 pr-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all ${loginError ? "border-red-300 focus:ring-red-400" : "border-gray-300"
+                    }`}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -206,9 +211,8 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent shadow-sm transition-all ${
-                    loginError ? "border-red-300 focus:ring-red-400" : "border-gray-300"
-                  }`}
+                  className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent shadow-sm transition-all ${loginError ? "border-red-300 focus:ring-red-400" : "border-gray-300"
+                    }`}
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value);
