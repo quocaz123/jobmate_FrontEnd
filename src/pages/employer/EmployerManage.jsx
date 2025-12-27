@@ -287,6 +287,7 @@ export default function EmployerManage({ onView, onEdit, onStartChat, onEditWith
 
                 <div className="ml-4 flex items-center gap-3 relative">
                   <button onClick={() => (onView ? onView(job.id) : alert('Xem chi tiết'))} className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded bg-white text-sm"><Eye size={16} /> Xem</button>
+                  <button onClick={() => handleViewCandidates(job.id, job.title)} className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded bg-white text-sm"><Users size={16} /> Xem danh sách ứng viên</button>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleEdit(job.id)}
@@ -307,12 +308,6 @@ export default function EmployerManage({ onView, onEdit, onStartChat, onEditWith
                       <button onClick={() => setOpenMenuId(openMenuId === job.id ? null : job.id)} className="p-2 rounded hover:bg-gray-50 text-gray-400" title="Thêm"><MoreVertical size={16} /></button>
                       {openMenuId === job.id && (
                         <div className="absolute right-0 mt-2 w-56 bg-white border border-gray-100 rounded shadow-md z-10">
-                          <button
-                            onClick={() => handleViewCandidates(job.id, job.title)}
-                            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                          >
-                            <Users size={16} /> Xem danh sách ứng viên
-                          </button>
                           {(() => {
                             const closableStatuses = ['APPROVED', 'PENDING_REVIEW', 'REJECTED']
                             const canClose = closableStatuses.includes(job.status)

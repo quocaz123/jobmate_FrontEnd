@@ -25,6 +25,7 @@ export default function LoginPage() {
   const [otpExpiryTime, setOtpExpiryTime] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const countdownIntervalRef = useRef(null);
+  const [loginError, setLoginError] = useState("");
 
   // Countdown timer cho OTP
   useEffect(() => {
@@ -77,12 +78,15 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoginError(""); // Reset error message
+    
     try {
       const res = await login(email, password);
       const data = res.data.data;
 
       // Nếu tài khoản bị cấm / khoá
       if (data.status === "BANNED" || data.banned === true) {
+        setLoginError("Tài khoản của bạn đã bị khóa do vi phạm quy định.");
         showError("Tài khoản của bạn đã bị khóa do vi phạm quy định.");
         return;
       }
@@ -105,8 +109,11 @@ export default function LoginPage() {
       }, 1200);
 
     } catch (error) {
-      const msg = error.response?.data?.message || "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
-      showError(msg);
+      // Hiển thị thông báo lỗi "email hoặc password không đúng"
+      const errorMessage = "Email hoặc mật khẩu không đúng";
+      setLoginError(errorMessage);
+      showError(errorMessage);
+      // Không refresh trang, giữ nguyên giá trị email và password
     }
   };
 
@@ -173,9 +180,14 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   placeholder="your.email@example.com"
-                  className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all"
+                  className={`w-full pl-10 pr-3 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent shadow-sm transition-all ${
+                    loginError ? "border-red-300 focus:ring-red-400" : "border-gray-300"
+                  }`}
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    setLoginError(""); // Clear error when user types
+                  }}
                   required
                 />
               </div>
@@ -194,9 +206,14 @@ export default function LoginPage() {
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent shadow-sm transition-all"
+                  className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent shadow-sm transition-all ${
+                    loginError ? "border-red-300 focus:ring-red-400" : "border-gray-300"
+                  }`}
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setLoginError(""); // Clear error when user types
+                  }}
                   required
                 />
                 <button
@@ -212,6 +229,13 @@ export default function LoginPage() {
                 </button>
               </div>
             </div>
+
+            {/* Error message */}
+            {loginError && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                {loginError}
+              </div>
+            )}
 
             {/* Quên mật khẩu */}
             <div className="flex justify-end">
